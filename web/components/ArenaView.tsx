@@ -33,8 +33,10 @@ import {
 import Link from "next/link";
 import { CountdownRing, EquityBar, Sparkline, handleOf, madLine, thump } from "@/components/Bits";
 import Guide, { type GuideStep } from "@/components/Guide";
+import { LangSwitch } from "@/components/LangSwitch";
 import type { Wallet } from "@/lib/wallet";
 import { requestAirdrop } from "@/lib/wallet";
+import { Rich, useI18n, useT } from "@/lib/i18n";
 
 type Props = {
   arenaPubkey: PublicKey;
@@ -62,12 +64,14 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const [notice, setNotice] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const { c, lang } = useI18n();
+  const t = useT();
 
   // The notice is an acknowledgement, not a banner: it dismisses itself.
   useEffect(() => {
     if (!notice) return;
-    const t = setTimeout(() => setNotice(null), 6000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setNotice(null), 6000);
+    return () => clearTimeout(timer);
   }, [notice]);
   const [balance, setBalance] = useState<number>(0);
   const [tee, setTee] = useState<{ token: string; conn: Connection } | null>(null);
@@ -100,7 +104,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
     try {
       const info = await base.getAccountInfo(arenaPubkey);
       if (!info) {
-        setError("arena not found");
+        setError(t("arena not found"));
         return;
       }
       const isDelegated = info.owner.equals(DELEGATION_PROGRAM_ID);
@@ -136,13 +140,17 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               const seatIdx = Number((a as any).shockSeat);
               const victim = a.seats[seatIdx]?.player as any;
               const mine = victim ? victim.equals(wallet.publicKey) : false;
+              const victimName = victim ? handleOf(victim.toBase58()) : "";
               const label = mine
-                ? "THE PIT BIT YOU"
-                : `THE PIT BIT ${victim ? handleOf(victim.toBase58()) : "SOMEONE"}`;
+                ? t("THE PIT BIT YOU")
+                : t("THE PIT BIT {name}", { name: victimName || "?" });
               setKill({ label, n: sc, mine });
               thump(mine);
               setEvents((ev) =>
-                [`bite #${sc} · ${mine ? "you" : victim ? handleOf(victim.toBase58()) : "?"}`, ...ev].slice(0, 6),
+                [
+                  t("bite #{n} · {who}", { n: sc, who: mine ? t("you") : victimName || "?" }),
+                  ...ev,
+                ].slice(0, 6),
               );
               window.setTimeout(() => setKill(null), 5200);
             }
@@ -151,10 +159,10 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
           const nowTs = Math.floor(Date.now() / 1000);
           const cooldown = Math.max(15, Math.floor(Number(a.duration) / 8));
-          const holding = a.seats.slice(0, a.playerCount).filter((x: any) => x.side !== 0).length;
+          const holdingNow = a.seats.slice(0, a.playerCount).filter((x: any) => x.side !== 0).length;
           if (
             statusOf(a) === "live" &&
-            holding > 0 &&
+            holdingNow > 0 &&
             nowTs >= Number((a as any).lastShockTs) + cooldown &&
             !crankRef.current
           ) {
@@ -186,7 +194,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
-  }, [arenaPubkey, base, wallet, tee]);
+  }, [arenaPubkey, base, wallet, tee, t]);
 
   useEffect(() => {
     load();
@@ -236,64 +244,57 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       setCopiedLink(true);
       window.setTimeout(() => setCopiedLink(false), 2000);
     } catch {
-      setError(`copy failed — the invite link is ${shareUrl}`);
+      setError(t("copy failed — the invite link is {link}", { link: shareUrl }));
     }
   };
 
   const guideSteps: GuideStep[] = [
     {
       target: '[data-guide="pot"]',
-      title: "The pot",
-      body: `Every seat paid the same entry (${fmtSol(entrySol, 3)} SOL) and it all sits in one escrow vault. The podium splits it 60 / 25 / 15.`,
-      why:
-        "The vault is a program-owned PDA. Settlement is a CPI from that account, so neither the host nor the winner can move the pot by hand.",
+      title: t("The pot"),
+      body: t("Every seat paid the same entry ({entry} SOL) and it all sits in one escrow vault. The podium splits it 60 / 25 / 15.", {
+        entry: fmtSol(entrySol, 3),
+      }),
+      why: t("The vault is a program-owned PDA. Settlement is a CPI from that account, so neither the host nor the winner can move the pot by hand."),
     },
     {
       target: '[data-guide="nextstep"]',
-      title: "What to do right now",
+      title: t("What to do right now"),
       body:
         status === "open"
-          ? "This panel always tells you the next move: join, invite the second player, lock. It changes with every state of the round."
+          ? t("This panel always tells you the next move: join, invite the second player, lock. It changes with every state of the round.")
           : status === "live"
-            ? "This panel tells you what the round expects from you: trade, watch the bite, close before the bell."
-            : "This panel walks the payout: commit the state back to Solana, then settle the podium.",
-      why:
-        "A round has four states on-chain — open, live, settled, closed — and each one allows different instructions. Guessing is how people lose money.",
+            ? t("This panel tells you what the round expects from you: trade, watch the bite, close before the bell.")
+            : t("This panel walks the payout: commit the state back to Solana, then settle the podium."),
+      why: t("A round has four states on-chain — open, live, settled, closed — and each one allows different instructions. Guessing is how people lose money."),
     },
     {
       target: '[data-guide="board"]',
-      title: "The leaderboard",
-      body:
-        "Your own PnL is marked to market. Everybody else shows “hidden” until the bell — that is the sealed book, not a bug.",
-      why:
-        "With the arena sealed inside the enclave, a wallet outside the permission gets null for the whole account, token or not. Your positions are private on-chain.",
+      title: t("The leaderboard"),
+      body: t("Your own PnL is marked to market. Everybody else shows “hidden” until the bell — that is the sealed book, not a bug."),
+      why: t("With the arena sealed inside the enclave, a wallet outside the permission gets null for the whole account, token or not. Your positions are private on-chain."),
     },
     {
       target: '[data-guide="ticket"]',
-      title: "The ticket",
-      body:
-        "Pick LONG or SHORT, choose 1–5× leverage and open. The order executes inside the MagicBlock rollup: ~10ms and no gas.",
-      why:
-        "Trades never touch the base layer while the round runs, so there is no fee and no block wait. The price comes from the oracle read inside the rollup.",
+      title: t("The ticket"),
+      body: t("Pick LONG or SHORT, choose 1–5× leverage and open. The order executes inside the MagicBlock rollup: ~10ms and no gas."),
+      why: t("Trades never touch the base layer while the round runs, so there is no fee and no block wait. The price comes from the oracle read inside the rollup."),
     },
     ...(status === "live"
       ? [
           {
             target: '[data-guide="bite"]',
-            title: "The bite is coming",
-            body: `Every ${biteCooldown}s the pit force-closes one random player who is holding a position. This bar is the countdown.`,
-            why:
-              "The victim is drawn by the VRF oracle and the callback is identity-checked on-chain. Staying flat is a real defense: the pit only bites players with risk open.",
+            title: t("The bite is coming"),
+            body: t("Every {secs}s the pit force-closes one random player who is holding a position. This bar is the countdown.", { secs: biteCooldown }),
+            why: t("The victim is drawn by the VRF oracle and the callback is identity-checked on-chain. Staying flat is a real defense: the pit only bites players with risk open."),
           },
         ]
       : []),
     {
       target: '[data-guide="actions"]',
-      title: "Lifecycle controls",
-      body:
-        "Join → lock → delegate → trade → end round → commit → settle. Each button is one real transaction, and anyone can push the permissionless ones.",
-      why:
-        "Delegate goes to the base layer, everything that touches the delegated arena goes to the rollup, and settle goes back to base. That layer rule is what makes it cheap and still final.",
+      title: t("Lifecycle controls"),
+      body: t("Join → lock → delegate → trade → end round → commit → settle. Each button is one real transaction, and anyone can push the permissionless ones."),
+      why: t("Delegate goes to the base layer, everything that touches the delegated arena goes to the rollup, and settle goes back to base. That layer rule is what makes it cheap and still final."),
     },
   ].filter((s) => s.target !== '[data-guide="actions"]' || isCreator || status !== "open");
 
@@ -301,8 +302,8 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   useEffect(() => {
     if (!arena) return;
     if (window.localStorage.getItem("pit:guide:arena")) return;
-    const t = window.setTimeout(() => setGuideOpen(true), 1500);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setGuideOpen(true), 1500);
+    return () => window.clearTimeout(timer);
   }, [arena?.publicKey.toBase58()]);
 
 
@@ -332,13 +333,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   /** The rollup connection: the TEE one when the arena lives behind the enclave. */
   const erConn = (): Connection => {
     if (tee) return tee.conn;
-    if (!erUrl) throw new Error("the arena is not delegated to a rollup");
+    if (!erUrl) throw new Error(t("the arena is not delegated to a rollup"));
     return new Connection(erUrl, { commitment: "confirmed" });
   };
 
   const seal = () =>
     run("seal", async () => {
-      if (!tee) throw new Error("TEE session not ready");
+      if (!tee) throw new Error(t("TEE session not ready"));
       const program = programAt(tee.conn, wallet.publicKey);
       const accs = permissionAccounts(arenaPubkey, wallet.publicKey);
       const initTx = await program.methods.initPermission(nonce).accounts(accs).transaction();
@@ -370,7 +371,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
   const reveal = () =>
     run("reveal", async () => {
-      if (!tee) throw new Error("TEE session not ready");
+      if (!tee) throw new Error(t("TEE session not ready"));
       const program = programAt(tee.conn, wallet.publicKey);
       const accs = permissionAccounts(arenaPubkey, wallet.publicKey);
       const tx = await program.methods.setPrivacy(nonce, false).accounts(accs).transaction();
@@ -490,12 +491,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       <div className="shell">
         <div className="topbar">
           <button className="backlink" onClick={onBack}>
-            ← Back to lobby
+            {t("← Back to lobby")}
           </button>
         </div>
         <div className="empty" style={{ marginTop: 24 }}>
-          loading arena…
+          {t("loading arena…")}
         </div>
+        {error && <div className="err">{error}</div>}
       </div>
     );
   }
@@ -546,30 +548,31 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       <div className="topbar">
         <div className="brand">
           <button className="backlink" onClick={onBack}>
-            ← Lobby
+            {t("← Lobby")}
           </button>
-          <Link href="/" className="brand-text" title="back to the landing">
+          <Link href="/" className="brand-text" title={c.common.backToLanding}>
             <div className="brand-name">THE PIT</div>
             <div className="brand-sub mono">{shortKey(arenaPubkey)}</div>
           </Link>
         </div>
         <div className="wallet-box">
-          <button className="help-btn" onClick={() => setGuideOpen(true)} title="Replay the guided tour">
-            ? guide
+          <LangSwitch />
+          <button className="help-btn" onClick={() => setGuideOpen(true)} title={c.common.replayTour}>
+            {c.common.guide}
           </button>
           <span className="pill">
             <span className={`dot ${delegated ? "" : "warn"}`} />
             {!delegated
-              ? "base layer"
+              ? t("base layer")
               : sealed
-                ? "PER · sealed"
+                ? t("PER · sealed")
                 : tee
-                  ? "PER · open"
+                  ? t("PER · open")
                   : `ER · ${erUrl?.replace("https://", "") ?? ""}`}
           </span>
           {series && (
             <span className="pill">
-              series · R{arena.roundNo}/{series.maxRounds}
+              {t("series · R{n}/{max}", { n: arena.roundNo, max: series.maxRounds })}
             </span>
           )}
           <span className="pill mono">{balance.toFixed(3)} SOL</span>
@@ -578,36 +581,43 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
       <div className="arena-head">
         <div className="stat" data-guide="pot">
-          <div className="stat-label">Pot</div>
+          <div className="stat-label">{t("Pot")}</div>
           <div className="stat-value">{fmtSol(potSol)} SOL</div>
           <div className="stat-sub">
-            {arena.playerCount}/{arena.maxPlayers} seats · entry {fmtSol(sol(arena.entryFee), 2)} SOL
+            {t("{count}/{max} seats · entry {entry} SOL", {
+              count: arena.playerCount,
+              max: arena.maxPlayers,
+              entry: fmtSol(sol(arena.entryFee), 2),
+            })}
           </div>
           <div className="split">
             <span>
-              <b>60%</b> 1st
+              <b>60%</b> {t("1st")}
             </span>
             <span>
-              <b>25%</b> 2nd
+              <b>25%</b> {t("2nd")}
             </span>
             <span>
-              <b>15%</b> 3rd
+              <b>15%</b> {t("3rd")}
             </span>
           </div>
         </div>
         <div className="stat">
           {status === "live" ? (
-            <CountdownRing remaining={remaining} total={Number(arena.duration)} label="time left" />
+            <CountdownRing remaining={remaining} total={Number(arena.duration)} label={t("time left")} />
           ) : (
             <>
               <div className="stat-label">
-                {status === "open" ? "starts on lock" : "round"}
+                {status === "open" ? t("starts on lock") : t("round")}
               </div>
-              <div className="stat-value">{status.toUpperCase()}</div>
+              <div className="stat-value">{c.status[status].toUpperCase()}</div>
             </>
           )}
           <div className="stat-sub" style={{ textAlign: "center" }}>
-            {arena.duration.toString()}s rounds · rake {arena.rakeBps / 100}%
+            {t("{secs}s rounds · rake {rake}%", {
+              secs: arena.duration.toString(),
+              rake: arena.rakeBps / 100,
+            })}
           </div>
         </div>
         <div className="stat">
@@ -617,12 +627,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               `$${price.toFixed(3)}`
             ) : (
               <span style={{ fontSize: 15, fontWeight: 600, color: "var(--muted)" }}>
-                waiting for the feed
+                {t("waiting for the feed")}
               </span>
             )}
             {status === "live" && (
               <span className="live-chip" style={{ marginLeft: 9, verticalAlign: "middle" }}>
-                <span className="dot" /> live
+                <span className="dot" /> {t("live")}
               </span>
             )}
           </div>
@@ -633,7 +643,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             />
           </div>
           <div className="stat-sub">
-            {price ? "MagicBlock price feed · 10ms" : "the feed publishes once the arena is on the rollup"}
+            {price
+              ? t("MagicBlock price feed · 10ms")
+              : t("the feed publishes once the arena is on the rollup")}
           </div>
         </div>
       </div>
@@ -641,70 +653,77 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       {status === "open" && (
         <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
-            <span className="nextstep-title">Your next move</span>
+            <span className="nextstep-title">{t("Your next move")}</span>
             <span className="pill mono">
-              {needMore > 0 ? `${needMore} more player${needMore > 1 ? "s" : ""} to start` : "ready to start"}
+              {needMore > 0
+                ? needMore > 1
+                  ? t("{n} more players to start", { n: needMore })
+                  : t("1 more player to start")
+                : t("ready to start")}
             </span>
           </div>
           <div className="nextstep-what">
             {myIndex < 0
-              ? `Join for ${fmtSol(entrySol, 3)} SOL and start with 1,000 credits`
+              ? t("Join for {amount} SOL and start with 1,000 credits", { amount: fmtSol(entrySol, 3) })
               : needMore > 0
-                ? "You are in — the round cannot start alone"
+                ? t("You are in — the round cannot start alone")
                 : isCreator
-                  ? "Everyone is in: lock the arena to start the clock"
-                  : "Everyone is in: waiting for the host to lock"}
+                  ? t("Everyone is in: lock the arena to start the clock")
+                  : t("Everyone is in: waiting for the host to lock")}
           </div>
           <ul className="nextstep-steps">
             <li>
               <span className="nextstep-num">1</span>
               <span>
                 {myIndex < 0
-                  ? "Join: your entry goes into an escrow vault and the program opens your seat."
-                  : "You are seated and paid. Nothing else to deposit."}
+                  ? t("Join: your entry goes into an escrow vault and the program opens your seat.")
+                  : t("You are seated and paid. Nothing else to deposit.")}
               </span>
             </li>
             <li>
               <span className="nextstep-num">2</span>
               <span>
-                A round needs <b>2 players</b>. Copy the invite link and send it —{" "}
-                <b>no bots join by themselves</b>.
+                <Rich text={t("A round needs **2 players**. Copy the invite link and send it — **no bots join by themselves**.")} />
               </span>
             </li>
             <li>
               <span className="nextstep-num">3</span>
               <span>
-                {isCreator ? "You lock it: " : "The host locks it: "}
-                the arena delegates to MagicBlock, the clock starts and the book is sealed.
+                {isCreator ? t("You lock it: ") : t("The host locks it: ")}
+                {t("the arena delegates to MagicBlock, the clock starts and the book is sealed.")}
               </span>
             </li>
           </ul>
           <div className="nextstep-actions">
             {myIndex < 0 && (
               <button className="btn" disabled={busy !== null} onClick={join}>
-                {busy === "join" ? "joining…" : `Join for ${fmtSol(entrySol, 2)} SOL`}
+                {busy === "join"
+                  ? t("joining…")
+                  : t("Join for {amount} SOL", { amount: fmtSol(entrySol, 2) })}
               </button>
             )}
             {myIndex >= 0 && needMore === 0 && isCreator && (
               <button className="btn" disabled={busy !== null} onClick={lock}>
-                {busy === "lock" ? "locking…" : "Lock & start round"}
+                {busy === "lock" ? t("locking…") : t("Lock & start round")}
               </button>
             )}
             <button className="btn ghost" onClick={copyInvite}>
-              {copiedLink ? "link copied ✓" : "Copy invite link"}
+              {copiedLink ? t("link copied ✓") : t("Copy invite link")}
             </button>
           </div>
           <p className="nextstep-note">
-            Nobody joins automatically — this arena only fills with wallets you invite. The link
-            opens it directly, so the other player lands on this same table.
+            {t("Nobody joins automatically — this arena only fills with wallets you invite. The link opens it directly, so the other player lands on this same table.")}
           </p>
           {myIndex < 0 && balance < entrySol && (
             <div className="alert-inline" style={{ marginTop: 12, marginBottom: 0 }}>
               <span>
-                You need {fmtSol(entrySol, 3)} SOL to join and the wallet holds {balance.toFixed(3)}.
+                {t("You need {need} SOL to join and the wallet holds {have}.", {
+                  need: fmtSol(entrySol, 3),
+                  have: balance.toFixed(3),
+                })}
               </span>
               <button className="btn ghost" disabled={busy !== null} onClick={airdrop}>
-                {busy === "airdrop" ? "requesting…" : "Request 1 devnet SOL"}
+                {busy === "airdrop" ? t("requesting…") : t("Request 1 devnet SOL")}
               </button>
             </div>
           )}
@@ -714,25 +733,24 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       {status === "live" && (
         <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
-            <span className="nextstep-title">The clock is running</span>
-            <span className="pill mono">{fmtClock(remaining)} left</span>
+            <span className="nextstep-title">{t("The clock is running")}</span>
+            <span className="pill mono">{t("{clock} left", { clock: fmtClock(remaining) })}</span>
           </div>
-          <div className="nextstep-what">Trade from the ticket, then survive the bite</div>
+          <div className="nextstep-what">{t("Trade from the ticket, then survive the bite")}</div>
           <ul className="nextstep-steps">
             <li>
               <span className="nextstep-num">1</span>
-              <span>Pick LONG or SHORT, choose leverage and open a position — it settles in ~10ms, no fees.</span>
+              <span>{t("Pick LONG or SHORT, choose leverage and open a position — it settles in ~10ms, no fees.")}</span>
             </li>
             <li>
               <span className="nextstep-num">2</span>
               <span>
-                Every {biteCooldown}s the pit force-closes one random player who is holding. Staying
-                flat is a real defense.
+                {t("Every {secs}s the pit force-closes one random player who is holding. Staying flat is a real defense.", { secs: biteCooldown })}
               </span>
             </li>
             <li>
               <span className="nextstep-num">3</span>
-              <span>Close before the bell: the top three split the pot 60/25/15.</span>
+              <span>{t("Close before the bell: the top three split the pot 60/25/15.")}</span>
             </li>
           </ul>
         </div>
@@ -741,22 +759,22 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       {status === "settled" && (
         <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
-            <span className="nextstep-title">Round closed</span>
-            <span className="pill mono">payout pending</span>
+            <span className="nextstep-title">{t("Round closed")}</span>
+            <span className="pill mono">{t("payout pending")}</span>
           </div>
-          <div className="nextstep-what">Commit the round back to Solana, then settle the podium</div>
+          <div className="nextstep-what">{t("Commit the round back to Solana, then settle the podium")}</div>
           <ul className="nextstep-steps">
             <li>
               <span className="nextstep-num">1</span>
               <span>
                 {delegated
-                  ? "Commit & undelegate: the final state travels back from the rollup to the base layer."
-                  : "The arena is already back on the base layer."}
+                  ? t("Commit & undelegate: the final state travels back from the rollup to the base layer.")
+                  : t("The arena is already back on the base layer.")}
               </span>
             </li>
             <li>
               <span className="nextstep-num">2</span>
-              <span>Settle: the escrow vault pays 60/25/15 to the top three, plus the last-one-standing bonus.</span>
+              <span>{t("Settle: the escrow vault pays 60/25/15 to the top three, plus the last-one-standing bonus.")}</span>
             </li>
           </ul>
         </div>
@@ -765,13 +783,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       {status === "closed" && (
         <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
-            <span className="nextstep-title">Round paid</span>
-            <span className="pill mono">{arena.playerCount} seats</span>
+            <span className="nextstep-title">{t("Round paid")}</span>
+            <span className="pill mono">{t("{n} seats", { n: arena.playerCount })}</span>
           </div>
-          <div className="nextstep-what">The podium took the pot — start the next one</div>
+          <div className="nextstep-what">{t("The podium took the pot — start the next one")}</div>
           <div className="nextstep-actions">
             <button className="btn ghost" onClick={onBack}>
-              Back to the lobby
+              {t("Back to the lobby")}
             </button>
           </div>
         </div>
@@ -779,12 +797,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
       {status === "live" && delegated && (
         <div className={`danger ${nextBiteIn <= 0 ? "ready" : nextBiteIn <= 5 ? "soon" : ""}`} data-guide="bite">
-          <span className="danger-label">next bite</span>
-          <span className="danger-count mono">{nextBiteIn > 0 ? fmtClock(nextBiteIn) : "READY"}</span>
+          <span className="danger-label">{t("next bite")}</span>
+          <span className="danger-count mono">{nextBiteIn > 0 ? fmtClock(nextBiteIn) : t("READY")}</span>
           <span className="danger-note">
             {holding > 0
-              ? `${holding} holding risk · the pit takes one at random`
-              : "nobody is holding · the pit has nothing to bite"}
+              ? t("{n} holding risk · the pit takes one at random", { n: holding })
+              : t("nobody is holding · the pit has nothing to bite")}
           </span>
           <span className="danger-track">
             <span className="danger-fill" style={{ width: `${bitePct}%` }} />
@@ -794,29 +812,31 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
       {revealed && arena.lstWinner && !arena.lstWinner.equals(PublicKey.default) && (
         <div className="lst">
-          <span className="lst-badge">last one standing</span>
+          <span className="lst-badge">{t("last one standing")}</span>
           <span className="lst-who">
-            {arena.lstWinner.equals(wallet.publicKey) ? "you" : handleOf(arena.lstWinner.toBase58())}
+            {arena.lstWinner.equals(wallet.publicKey) ? t("you") : handleOf(arena.lstWinner.toBase58())}
           </span>
           <span className="lst-sub">
-            held into the bell · +{sol(arena.lstBonus).toFixed(4)} SOL off the top
+            {t("held into the bell · +{amount} SOL off the top", {
+              amount: sol(arena.lstBonus).toFixed(4),
+            })}
           </span>
         </div>
       )}
 
       {iAmMad && (
         <div className="mad-banner">
-          <span className="mad-badge">fever</span>
-          <span className="mad-line">“{madLine(wallet.publicKey.toBase58(), Math.floor(madLeft / 20))}”</span>
-          <span className="mad-sub">{madLeft}s · your orders execute inverted</span>
+          <span className="mad-badge">{t("fever")}</span>
+          <span className="mad-line">“{madLine(wallet.publicKey.toBase58(), Math.floor(madLeft / 20), lang)}”</span>
+          <span className="mad-sub">{t("{n}s · your orders execute inverted", { n: madLeft })}</span>
         </div>
       )}
 
       {kill && (
         <div className={`kill ${kill.mine ? "mine" : ""}`}>
-          <span className="kill-n mono">BITE #{kill.n}</span>
+          <span className="kill-n mono">{t("BITE #{n}", { n: kill.n })}</span>
           <span className="kill-who">{kill.label}</span>
-          <span className="kill-sub">forced flat at market · VRF proof on-chain</span>
+          <span className="kill-sub">{t("forced flat at market · VRF proof on-chain")}</span>
         </div>
       )}
 
@@ -826,7 +846,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
       {events.length > 0 && (
         <div className="ticker">
-          <span className="ticker-label">tape</span>
+          <span className="ticker-label">{t("tape")}</span>
           {events.map((e, i) => (
             <span className="ticker-item" key={`${e}-${i}`}>
               <span className="pip" />
@@ -839,13 +859,19 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       <div className="cols">
         <div className={`panel ${sealed ? "sealed" : ""}`} data-guide="board">
           <div className="panel-head">
-            <span>Leaderboard</span>
+            <span>{t("Leaderboard")}</span>
             <span>
-              {revealed ? "revealed" : sealed ? "sealed by the enclave" : status === "live" ? "positions hidden" : "waiting"}
+              {revealed
+                ? t("revealed")
+                : sealed
+                  ? t("sealed by the enclave")
+                  : status === "live"
+                    ? t("positions hidden")
+                    : t("waiting")}
             </span>
           </div>
           <div className="panel-body">
-            {seats.length === 0 && <div className="row">nobody yet — be the first</div>}
+            {seats.length === 0 && <div className="row">{t("nobody yet — be the first")}</div>}
             {seats.map((seat, i) => {
               const mine = seat.player.equals(wallet.publicKey);
               const inResults = settledEquity.has(seat.player.toBase58());
@@ -866,28 +892,30 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                   <span className="rank mono">{String(i + 1).padStart(2, "0")}</span>
                   <span className="who">
                     <span className="who-line">
-                      {mine ? "you" : handleOf(key)}
+                      {mine ? t("you") : handleOf(key)}
                       {seat.side !== 0 && (revealed || mine) && (
                         <span className={`side-chip ${seat.side > 0 ? "long" : "short"}`}>
                           {seat.side > 0 ? "LONG" : "SHORT"} {leverageOf(seat)}
                         </span>
                       )}
                       {(seat as any).streak > 0 && (
-                        <span className="streak">{(seat as any).streak} survived</span>
+                        <span className="streak">{t("{n} survived", { n: (seat as any).streak })}</span>
                       )}
                     </span>
                     {Number((seat as any).madUntil ?? 0) > now && (
                       <span className="mad-thought">
-                        {madLine(key, Math.floor(Number((seat as any).madUntil) / 20))}
+                        {madLine(key, Math.floor(Number((seat as any).madUntil) / 20), lang)}
                       </span>
                     )}
-                    <small>{seat.trades} {seat.trades === 1 ? "trade" : "trades"}</small>
+                    <small>
+                      {seat.trades} {t(seat.trades === 1 ? "trade" : "trades")}
+                    </small>
                   </span>
                   <span
                     className={`pnl ${showPnl ? (Math.abs(delta) < 0.005 ? "flat" : delta > 0 ? "up" : "down") : "sealed"}`}
-                    title={showPnl ? "mark-to-market equity" : "hidden until the bell"}
+                    title={showPnl ? t("mark-to-market equity") : t("hidden until the bell")}
                   >
-                    {showPnl ? (Math.abs(delta) < 0.005 ? "±0.00" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`) : revealed ? "—" : "hidden"}
+                    {showPnl ? (Math.abs(delta) < 0.005 ? "±0.00" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`) : revealed ? "—" : t("hidden")}
                   </span>
                 </div>
               );
@@ -896,7 +924,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               <>
                 <div className="frost" />
                 <span className="veil-chip">
-                  <span className="lock-dot" /> sealed
+                  <span className="lock-dot" /> {t("sealed")}
                 </span>
               </>
             )}
@@ -905,13 +933,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
         <div className="panel" data-guide="ticket">
           <div className="panel-head">
-            <span>{status === "live" ? "Trade ticket" : "Status"}</span>
-            <span>{status === "live" ? "gasless" : ""}</span>
+            <span>{status === "live" ? t("Trade ticket") : t("Status")}</span>
+            <span>{status === "live" ? t("gasless") : ""}</span>
           </div>
           <div className="ticket">
             {mySeat && (
               <div className="pressure">
-                <span className="pressure-label">pressure</span>
+                <span className="pressure-label">{t("pressure")}</span>
                 <span className="pressure-track">
                   <span
                     className={`pressure-fill ${iAmMad ? "mad" : ""}`}
@@ -924,13 +952,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             {status === "open" && (
               <>
                 <p className="hint" style={{ marginTop: 0 }}>
-                  Entry is open. When the host locks the arena it gets delegated to the rollup and
-                  every trade runs for free at 10ms.
+                  {t("Entry is open. When the host locks the arena it gets delegated to the rollup and every trade runs for free at 10ms.")}
                 </p>
                 <p className="hint" style={{ marginTop: 10 }}>
                   {myIndex >= 0
-                    ? `Seat #${myIndex + 1} is yours. Waiting for the clock to start.`
-                    : "Your seat is still open — join from the panel above."}
+                    ? t("Seat #{n} is yours. Waiting for the clock to start.", { n: myIndex + 1 })
+                    : t("Your seat is still open — join from the panel above.")}
                 </p>
               </>
             )}
@@ -947,7 +974,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 </div>
                 <div className="field">
                   <div className="field-label">
-                    <span>Leverage</span>
+                    <span>{t("Leverage")}</span>
                     <span className="leverage">{leverage}×</span>
                   </div>
                   <input
@@ -961,7 +988,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 </div>
                 {mySeat && mySeat.side !== 0 ? (
                   <button className="btn ghost" disabled={busy !== null} onClick={() => trade("close")}>
-                    {busy === "close" ? "closing…" : `Close ${mySeat.side > 0 ? "LONG" : "SHORT"}`}
+                    {busy === "close"
+                      ? t("closing…")
+                      : t("Close {side}", { side: mySeat.side > 0 ? "LONG" : "SHORT" })}
                   </button>
                 ) : (
                   <button
@@ -969,12 +998,15 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                     disabled={busy !== null || myIndex < 0}
                     onClick={() => trade("open")}
                   >
-                    {myIndex < 0 ? "not seated" : busy === "open" ? "sending…" : `Open ${side === 1 ? "LONG" : "SHORT"}`}
+                    {myIndex < 0
+                      ? t("not seated")
+                      : busy === "open"
+                        ? t("sending…")
+                        : t("Open {side}", { side: side === 1 ? "LONG" : "SHORT" })}
                   </button>
                 )}
                 <p className="hint">
-                  Notional {leverage}× your equity. PnL is marked against the MagicBlock price feed and
-                  settles on Solana when the round closes.
+                  {t("Notional {lev}× your equity. PnL is marked against the MagicBlock price feed and settles on Solana when the round closes.", { lev: leverage })}
                 </p>
               </>
             )}
@@ -982,12 +1014,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             {(status === "settled" || status === "closed") && (
               <>
                 <p className="hint" style={{ marginTop: 0 }}>
-                  Round closed. Podium settled from the escrow vault.
+                  {t("Round closed. Podium settled from the escrow vault.")}
                 </p>
                 {arena.results.slice(0, arena.winnerCount).map((r, i) => (
                   <div className="row" key={r.player.toBase58()} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
                     <span className="rank mono">#{i + 1}</span>
-                    <span className="who mono">{r.player.equals(wallet.publicKey) ? "you" : shortKey(r.player)}</span>
+                    <span className="who mono">{r.player.equals(wallet.publicKey) ? t("you") : shortKey(r.player)}</span>
                     <span className="pnl up">{(Number(r.equity) / FIXED).toFixed(4)}</span>
                   </div>
                 ))}
@@ -999,7 +1031,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    View on explorer
+                    {t("View on explorer")}
                   </a>
                 </div>
               </>
@@ -1010,58 +1042,64 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           <div className="actions" data-guide="actions">
             {status === "open" && isCreator && (
               <button className="btn ghost" disabled={busy !== null || arena.playerCount < 2} onClick={lock}>
-                {busy === "lock" ? "locking…" : arena.playerCount < 2 ? "need 2+ players" : "Lock & start round"}
+                {busy === "lock"
+                  ? t("locking…")
+                  : arena.playerCount < 2
+                    ? t("need 2+ players")
+                    : t("Lock & start round")}
               </button>
             )}
             {status === "live" && !delegated && (
               <button className="btn" disabled={busy !== null} onClick={delegate}>
-                {busy === "delegate" ? "delegating…" : "Delegate to rollup"}
+                {busy === "delegate" ? t("delegating…") : t("Delegate to rollup")}
               </button>
             )}
             {status === "live" && delegated && remaining <= 0 && (
               <button className="btn ghost" disabled={busy !== null} onClick={endRound}>
-                {busy === "end_round" ? "ranking…" : "End round"}
+                {busy === "end_round" ? t("ranking…") : t("End round")}
               </button>
             )}
             {status === "live" && delegated && Number((arena as any).shockSeat) === 255 && (
               <button className="btn ghost" disabled={busy !== null} onClick={shock}>
-                {busy === "shock" ? "calling the oracle…" : "Call the shock (VRF)"}
+                {busy === "shock" ? t("calling the oracle…") : t("Call the shock (VRF)")}
               </button>
             )}
             {Number((arena as any).shockSeat) !== 255 && (
               <div className="hint">
-                The pit bit seat #{Number((arena as any).shockSeat) + 1} — VRF drawn, flat at market.
+                {t("The pit bit seat #{n} — VRF drawn, flat at market.", {
+                  n: Number((arena as any).shockSeat) + 1,
+                })}
               </div>
             )}
             {status === "live" && delegated && tee && !sealed && (
               <button className="btn" disabled={busy !== null} onClick={seal}>
-                {busy === "seal" ? "sealing…" : "Seal the pit (PER)"}
+                {busy === "seal" ? t("sealing…") : t("Seal the pit (PER)")}
               </button>
             )}
             {delegated && sealed && (
               <button className="btn ghost" disabled={busy !== null} onClick={reveal}>
-                {busy === "reveal" ? "revealing…" : "Reveal the book"}
+                {busy === "reveal" ? t("revealing…") : t("Reveal the book")}
               </button>
             )}
             {status === "closed" && series && !arena.seriesRecorded && (
               <button className="btn" disabled={busy !== null} onClick={record}>
-                {busy === "record" ? "recording…" : "Record round in series"}
+                {busy === "record" ? t("recording…") : t("Record round in series")}
               </button>
             )}
             {status === "closed" && arena.seriesRecorded && (
               <div className="hint" style={{ color: "var(--long)" }}>
-                Round already counted in the series standings.
+                {t("Round already counted in the series standings.")}
               </div>
             )}
 
             {status === "settled" && delegated && !sealed && (
               <button className="btn" disabled={busy !== null} onClick={commit}>
-                {busy === "commit" ? "committing…" : "Commit & undelegate"}
+                {busy === "commit" ? t("committing…") : t("Commit & undelegate")}
               </button>
             )}
             {status === "settled" && !delegated && (
               <button className="btn" disabled={busy !== null} onClick={settle}>
-                {busy === "settle" ? "paying…" : "Settle podium"}
+                {busy === "settle" ? t("paying…") : t("Settle podium")}
               </button>
             )}
           </div>
@@ -1069,10 +1107,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       </div>
 
       <div className="foot-note">
-        devnet · arena {shortKey(arenaPubkey)} · every state transition is a real transaction.
+        {t("devnet · arena {key} · every state transition is a real transaction.", {
+          key: shortKey(arenaPubkey),
+        })}
         {sealed
-          ? " The book is sealed inside the enclave (PER): a wallet outside the permission gets null for this account, token or not."
-          : " Positions are hidden in this UI while the round runs; seal the pit to make them unreadable on-chain too."}
+          ? ` ${t("The book is sealed inside the enclave (PER): a wallet outside the permission gets null for this account, token or not.")}`
+          : ` ${t("Positions are hidden in this UI while the round runs; seal the pit to make them unreadable on-chain too.")}`}
       </div>
 
       <Guide

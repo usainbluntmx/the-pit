@@ -177,12 +177,26 @@ const MAD_LINES = [
   "BACK IN FIVE MINUTES",
 ];
 
-export function madLine(key: string, epoch: number): string {
+const MAD_LINES_ES = [
+  "YO SOY EL PRECIO",
+  "VENDE TODO, NO COMPRES NADA",
+  "ARRIBA NO EXISTE",
+  "ESTOY PERFECTAMENTE BIEN",
+  "▚▞ EL POZO ME HABLA ▞▚",
+  "YO COMPRO EL POZO",
+  "MI STOP ES UNA SUGERENCIA",
+  "TODOS GANAN MENOS YO",
+  "▞▚▞ EL ROJO NO EXISTE ▞▚▞",
+  "REGRESO EN CINCO MINUTOS",
+];
+
+export function madLine(key: string, epoch: number, lang: "en" | "es" = "en"): string {
   let h = 2166136261;
   const seed = `${key}:${epoch}`;
   for (let i = 0; i < seed.length; i++) {
     h ^= seed.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
-  return MAD_LINES[Math.abs(h) % MAD_LINES.length];
+  const lines = lang === "es" ? MAD_LINES_ES : MAD_LINES;
+  return lines[Math.abs(h) % lines.length];
 }
