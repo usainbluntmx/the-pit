@@ -9,6 +9,7 @@ y al cerrar la ronda el podio se lleva el pozo del escrow.
 ![PIT — landing](docs/screens/16-landing.png)
 
 **Live:** https://usainbluntmx.github.io/the-pit/ · **Código:** https://github.com/usainbluntmx/the-pit
+**Demo (74 s):** [`docs/demo.mp4`](docs/demo.mp4) · [`docs/demo-sin-voz.mp4`](docs/demo-sin-voz.mp4)
 
 Edición: **Solana Blitz v10 — Entertainment Finance** (20–27 nov 2026).
 Estado: **devnet, 21 nov 2026** — programa desplegado, ciclo completo y las tres
@@ -438,5 +439,5 @@ Pendiente para la submission del Blitz v10 (deadline 27 nov 2026, 15:00 CET):
 
 - [x] Repo git + publicación en GitHub
 - [x] Deploy público del web — https://usainbluntmx.github.io/the-pit/
-- [ ] Video demo corto y proof of work para el formulario
+- [x] Video demo corto y proof of work para el formulario
 - [ ] Enviar el proyecto en `build.magicblock.app/?stage=blitz#submit`
