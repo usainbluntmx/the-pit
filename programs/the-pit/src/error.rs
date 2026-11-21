@@ -56,4 +56,10 @@ pub enum PitError {
     SeriesComplete,
     #[msg("This round was already recorded in the series")]
     RoundAlreadyRecorded,
+    #[msg("A solo run is settled with settle_solo, not settle")]
+    SoloNeedsSettleSolo,
+    #[msg("This instruction only applies to a solo arena")]
+    NotSoloArena,
+    #[msg("The house PDA does not hold enough SOL for this payout")]
+    HouseUnderfunded,
 }
