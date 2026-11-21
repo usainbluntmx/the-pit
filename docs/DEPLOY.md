@@ -53,11 +53,14 @@ frontend en `web/`. Si se deja `/`, Nixpacks intenta instalar el paquete de la r
 
 ## 4. Build
 
-- **Build Type**: `Nixpacks` (default). No hace falta `nixpacks.toml`.
+- **Build Type**: `Nixpacks` (default).
 - **Publish Directory**: **vacío**. Si se llena, Dokploy trata la app como estática,
   la copia a NGINX y el App Router deja de funcionar.
 - Node lo toma de `engines` (`20.x`). Si la versión de Dokploy ignora `engines`,
   define `NIXPACKS_NODE_VERSION=20` en Environment.
+- `web/nixpacks.toml` fuerza `npm ci --include=dev`: Nixpacks construye con
+  `NODE_ENV=production` y sin eso se omiten las devDependencies (TypeScript) y el
+  build falla. No hace falta tocar nada en el panel.
 
 ## 5. Environment (opcional)
 

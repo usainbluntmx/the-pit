@@ -1,0 +1,5 @@
+# Nixpacks pisa NODE_ENV=production en el build, así que `npm ci` puede omitir
+# devDependencies y `next build` se queda sin TypeScript. Forzamos el install
+# completo para que el build no dependa de configuración del panel.
+[phases.install]
+cmds = ["npm ci --include=dev"]
