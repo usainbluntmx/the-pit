@@ -10,6 +10,8 @@ test-ledger
 # frontend build
 .next/
 **/.next/
+out/
+**/out/
 *.tsbuildinfo
 
 # secretos: nunca se commitean

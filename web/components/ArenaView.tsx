@@ -233,7 +233,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const revealed = status === "settled" || status === "closed";
   const shareUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/play?arena=${arenaPubkey.toBase58()}`
+      ? `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/play?arena=${arenaPubkey.toBase58()}`
       : "";
   const needMore = arena ? Math.max(0, 2 - arena.playerCount) : 0;
   const entrySol = arena ? sol(arena.entryFee) : 0;

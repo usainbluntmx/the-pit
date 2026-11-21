@@ -142,3 +142,37 @@ dispara build y deploy. Sin GitHub App, usa el webhook que muestra Dokploy en
   emisión. Pon la nube en gris, reintenta, y luego reactiva el proxy.
 - **El deploy viejo sigue vivo**: revisar **Deployments** — un build fallido no
   reemplaza el contenedor anterior.
+
+---
+
+## Deploy actual: GitHub Pages (export estático)
+
+El frontend es 100% cliente (no hay API routes), así que se publica como export estático
+en GitHub Pages, sin servidor ni contenedor:
+
+**https://usainbluntmx.github.io/the-pit/**
+
+```bash
+cd web
+STATIC_EXPORT=1 PAGES_BASE_PATH=/the-pit NEXT_PUBLIC_BASE_PATH=/the-pit npm run build
+touch out/.nojekyll
+cd out
+git init -q && git checkout -q -b gh-pages && git add -A
+git commit -qm "deploy: export estático"
+git remote add origin https://github.com/usainbluntmx/the-pit.git
+git push -f origin gh-pages
+```
+
+- `PAGES_BASE_PATH`/`NEXT_PUBLIC_BASE_PATH` existen porque Pages sirve el repo bajo
+  `/the-pit`. Sin ellos, los assets y los enlaces internos apuntan a la raíz del dominio.
+- `output: "export"` solo se activa con `STATIC_EXPORT=1`; el build normal sigue siendo
+  una app Next con servidor (útil para Dokploy/Vercel).
+- `.nojekyll` evita que Jekyll ignore la carpeta `_next/`.
+- La rama `gh-pages` es solo el artefacto; el código vive en `main`.
+
+### Trampa: dev y build comparten `.next`
+
+`next dev` y `next build` escriben el mismo `.next`. Si corres `next dev` mientras hay
+un `next start` sirviendo, el servidor queda con chunks viejos y el navegador revienta
+con "Application error: a client-side exception". Para QA: mata el server, reconstruye
+y vuelve a arrancar; o usa `distDir` distinto.

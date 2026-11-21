@@ -39,6 +39,8 @@ import {
 } from "@/lib/wallet";
 
 const ARENAS_KEY = "pit:arenas";
+/** Empty on a normal deploy; "/the-pit" on GitHub Pages. */
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 function rememberArena(pubkey: string) {
   try {
@@ -188,12 +190,12 @@ export default function Home() {
       return;
     }
     // Keep the URL shareable: a friend opening it lands on the same table.
-    window.history.replaceState(null, "", `/play?arena=${key.toBase58()}`);
+    window.history.replaceState(null, "", `${BASE_PATH}/play?arena=${key.toBase58()}`);
     setSelected(key);
   };
 
   const closeArena = () => {
-    window.history.replaceState(null, "", "/play");
+    window.history.replaceState(null, "", `${BASE_PATH}/play`);
     setSelected(null);
   };
 
