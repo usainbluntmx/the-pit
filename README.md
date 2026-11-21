@@ -140,6 +140,9 @@ Qué hace:
   rollups de devnet.
 - **Arena en vivo**: pot, countdown, precio del feed leído dentro del rollup y
   leaderboard con las posiciones de los demás tapadas hasta el cierre.
+- **Next move**: un panel según el estado de la ronda dice qué hacer ahora (unirse,
+  invitar, bloquear, operar, liquidar), con enlace de invitación `?arena=<pubkey>`
+  que abre la misma mesa al invitado.
 - **Ticket**: LONG / SHORT con leverage 1–5×, ejecutado en el ER (gasless), con la
   barra de presión y la línea de delirio cuando el asiento está en fiebre.
 - **Ciclo completo desde la UI**: join → lock → delegate → trade → end round →

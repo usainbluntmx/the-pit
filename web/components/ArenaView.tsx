@@ -32,6 +32,7 @@ import {
 import Link from "next/link";
 import { CountdownRing, EquityBar, Sparkline, handleOf, madLine, thump } from "@/components/Bits";
 import type { Wallet } from "@/lib/wallet";
+import { requestAirdrop } from "@/lib/wallet";
 
 type Props = {
   arenaPubkey: PublicKey;
@@ -57,6 +58,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // The notice is an acknowledgement, not a banner: it dismisses itself.
   useEffect(() => {
@@ -217,6 +219,23 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const madLeft = iAmMad ? Number((mySeat as any).madUntil) - now : 0;
   const pressure = mySeat ? Number((mySeat as any).pressure ?? 0) : 0;
   const revealed = status === "settled" || status === "closed";
+  const shareUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/play?arena=${arenaPubkey.toBase58()}`
+      : "";
+  const needMore = arena ? Math.max(0, 2 - arena.playerCount) : 0;
+  const entrySol = arena ? sol(arena.entryFee) : 0;
+
+  const copyInvite = async () => {
+    try {
+      await navigator.clipboard?.writeText(shareUrl);
+      setCopiedLink(true);
+      window.setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      setError(`copy failed — the invite link is ${shareUrl}`);
+    }
+  };
+
 
   const run = async (label: string, fn: () => Promise<string>) => {
     setBusy(label);
@@ -233,6 +252,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       setBusy(null);
     }
   };
+
+  const airdrop = () =>
+    run("airdrop", async () => {
+      const sig = await requestAirdrop(wallet.publicKey, 1);
+      setBalance((await base.getBalance(wallet.publicKey)) / LAMPORTS_PER_SOL);
+      return sig;
+    });
 
   /** The rollup connection: the TEE one when the arena lives behind the enclave. */
   const erConn = (): Connection => {
@@ -394,8 +420,8 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
     return (
       <div className="shell">
         <div className="topbar">
-          <button className="copy" onClick={onBack}>
-            ← back
+          <button className="backlink" onClick={onBack}>
+            ← Back to lobby
           </button>
         </div>
         <div className="empty" style={{ marginTop: 24 }}>
@@ -450,8 +476,8 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       <div className="grid-bg" />
       <div className="topbar">
         <div className="brand">
-          <button className="copy" onClick={onBack}>
-            ←
+          <button className="backlink" onClick={onBack}>
+            ← Lobby
           </button>
           <Link href="/" className="brand-text" title="back to the landing">
             <div className="brand-name">THE PIT</div>
@@ -515,7 +541,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
         <div className="stat">
           <div className="stat-label">SOL / USD</div>
           <div className="stat-value">
-            {price ? `$${price.toFixed(3)}` : "—"}
+            {price ? (
+              `$${price.toFixed(3)}`
+            ) : (
+              <span style={{ fontSize: 15, fontWeight: 600, color: "var(--muted)" }}>
+                waiting for the feed
+              </span>
+            )}
             {status === "live" && (
               <span className="live-chip" style={{ marginLeft: 9, verticalAlign: "middle" }}>
                 <span className="dot" /> live
@@ -528,9 +560,150 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               positive={history.length < 2 || history[history.length - 1] >= history[0]}
             />
           </div>
-          <div className="stat-sub">MagicBlock price feed · 10ms</div>
+          <div className="stat-sub">
+            {price ? "MagicBlock price feed · 10ms" : "the feed publishes once the arena is on the rollup"}
+          </div>
         </div>
       </div>
+
+      {status === "open" && (
+        <div className="nextstep">
+          <div className="nextstep-head">
+            <span className="nextstep-title">Your next move</span>
+            <span className="pill mono">
+              {needMore > 0 ? `${needMore} more player${needMore > 1 ? "s" : ""} to start` : "ready to start"}
+            </span>
+          </div>
+          <div className="nextstep-what">
+            {myIndex < 0
+              ? `Join for ${fmtSol(entrySol, 3)} SOL and start with 1,000 credits`
+              : needMore > 0
+                ? "You are in — the round cannot start alone"
+                : isCreator
+                  ? "Everyone is in: lock the arena to start the clock"
+                  : "Everyone is in: waiting for the host to lock"}
+          </div>
+          <ul className="nextstep-steps">
+            <li>
+              <span className="nextstep-num">1</span>
+              <span>
+                {myIndex < 0
+                  ? "Join: your entry goes into an escrow vault and the program opens your seat."
+                  : "You are seated and paid. Nothing else to deposit."}
+              </span>
+            </li>
+            <li>
+              <span className="nextstep-num">2</span>
+              <span>
+                A round needs <b>2 players</b>. Copy the invite link and send it —{" "}
+                <b>no bots join by themselves</b>.
+              </span>
+            </li>
+            <li>
+              <span className="nextstep-num">3</span>
+              <span>
+                {isCreator ? "You lock it: " : "The host locks it: "}
+                the arena delegates to MagicBlock, the clock starts and the book is sealed.
+              </span>
+            </li>
+          </ul>
+          <div className="nextstep-actions">
+            {myIndex < 0 && (
+              <button className="btn" disabled={busy !== null} onClick={join}>
+                {busy === "join" ? "joining…" : `Join for ${fmtSol(entrySol, 2)} SOL`}
+              </button>
+            )}
+            {myIndex >= 0 && needMore === 0 && isCreator && (
+              <button className="btn" disabled={busy !== null} onClick={lock}>
+                {busy === "lock" ? "locking…" : "Lock & start round"}
+              </button>
+            )}
+            <button className="btn ghost" onClick={copyInvite}>
+              {copiedLink ? "link copied ✓" : "Copy invite link"}
+            </button>
+          </div>
+          <p className="nextstep-note">
+            Nobody joins automatically — this arena only fills with wallets you invite. The link
+            opens it directly, so the other player lands on this same table.
+          </p>
+          {myIndex < 0 && balance < entrySol && (
+            <div className="alert-inline" style={{ marginTop: 12, marginBottom: 0 }}>
+              <span>
+                You need {fmtSol(entrySol, 3)} SOL to join and the wallet holds {balance.toFixed(3)}.
+              </span>
+              <button className="btn ghost" disabled={busy !== null} onClick={airdrop}>
+                {busy === "airdrop" ? "requesting…" : "Request 1 devnet SOL"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {status === "live" && (
+        <div className="nextstep">
+          <div className="nextstep-head">
+            <span className="nextstep-title">The clock is running</span>
+            <span className="pill mono">{fmtClock(remaining)} left</span>
+          </div>
+          <div className="nextstep-what">Trade from the ticket, then survive the bite</div>
+          <ul className="nextstep-steps">
+            <li>
+              <span className="nextstep-num">1</span>
+              <span>Pick LONG or SHORT, choose leverage and open a position — it settles in ~10ms, no fees.</span>
+            </li>
+            <li>
+              <span className="nextstep-num">2</span>
+              <span>
+                Every {biteCooldown}s the pit force-closes one random player who is holding. Staying
+                flat is a real defense.
+              </span>
+            </li>
+            <li>
+              <span className="nextstep-num">3</span>
+              <span>Close before the bell: the top three split the pot 60/25/15.</span>
+            </li>
+          </ul>
+        </div>
+      )}
+
+      {status === "settled" && (
+        <div className="nextstep">
+          <div className="nextstep-head">
+            <span className="nextstep-title">Round closed</span>
+            <span className="pill mono">payout pending</span>
+          </div>
+          <div className="nextstep-what">Commit the round back to Solana, then settle the podium</div>
+          <ul className="nextstep-steps">
+            <li>
+              <span className="nextstep-num">1</span>
+              <span>
+                {delegated
+                  ? "Commit & undelegate: the final state travels back from the rollup to the base layer."
+                  : "The arena is already back on the base layer."}
+              </span>
+            </li>
+            <li>
+              <span className="nextstep-num">2</span>
+              <span>Settle: the escrow vault pays 60/25/15 to the top three, plus the last-one-standing bonus.</span>
+            </li>
+          </ul>
+        </div>
+      )}
+
+      {status === "closed" && (
+        <div className="nextstep">
+          <div className="nextstep-head">
+            <span className="nextstep-title">Round paid</span>
+            <span className="pill mono">{arena.playerCount} seats</span>
+          </div>
+          <div className="nextstep-what">The podium took the pot — start the next one</div>
+          <div className="nextstep-actions">
+            <button className="btn ghost" onClick={onBack}>
+              Back to the lobby
+            </button>
+          </div>
+        </div>
+      )}
 
       {status === "live" && delegated && (
         <div className={`danger ${nextBiteIn <= 0 ? "ready" : nextBiteIn <= 5 ? "soon" : ""}`}>
@@ -638,8 +811,11 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                     )}
                     <small>{seat.trades} {seat.trades === 1 ? "trade" : "trades"}</small>
                   </span>
-                  <span className={`pnl ${showPnl ? (Math.abs(delta) < 0.005 ? "flat" : delta > 0 ? "up" : "down") : "sealed"}`}>
-                    {showPnl ? (Math.abs(delta) < 0.005 ? "±0.00" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`) : revealed ? "—" : "•••"}
+                  <span
+                    className={`pnl ${showPnl ? (Math.abs(delta) < 0.005 ? "flat" : delta > 0 ? "up" : "down") : "sealed"}`}
+                    title={showPnl ? "mark-to-market equity" : "hidden until the bell"}
+                  >
+                    {showPnl ? (Math.abs(delta) < 0.005 ? "±0.00" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`) : revealed ? "—" : "hidden"}
                   </span>
                 </div>
               );
@@ -679,9 +855,11 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                   Entry is open. When the host locks the arena it gets delegated to the rollup and
                   every trade runs for free at 10ms.
                 </p>
-                <button className="btn" disabled={busy !== null || myIndex >= 0} onClick={join}>
-                  {myIndex >= 0 ? "you are in" : busy === "join" ? "joining…" : `Join for ${fmtSol(sol(arena.entryFee), 2)} SOL`}
-                </button>
+                <p className="hint" style={{ marginTop: 10 }}>
+                  {myIndex >= 0
+                    ? `Seat #${myIndex + 1} is yours. Waiting for the clock to start.`
+                    : "Your seat is still open — join from the panel above."}
+                </p>
               </>
             )}
 

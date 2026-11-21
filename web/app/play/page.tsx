@@ -81,6 +81,15 @@ export default function Home() {
   useEffect(() => {
     setKnown(knownArenas());
     setWallets(detectWallets());
+    // A shared link opens the arena directly: /play?arena=<pubkey>
+    const target = new URLSearchParams(window.location.search).get("arena");
+    if (target) {
+      try {
+        setSelected(new PublicKey(target));
+      } catch {
+        /* not a valid key — ignore the query string */
+      }
+    }
     // Extensions inject after hydration, so re-scan once the page is idle.
     const t = window.setTimeout(() => setWallets(detectWallets()), 900);
     reconnectWallet().then((w) => {
@@ -159,7 +168,14 @@ export default function Home() {
       setPicking(true);
       return;
     }
+    // Keep the URL shareable: a friend opening it lands on the same table.
+    window.history.replaceState(null, "", `/play?arena=${key.toBase58()}`);
     setSelected(key);
+  };
+
+  const closeArena = () => {
+    window.history.replaceState(null, "", "/play");
+    setSelected(null);
   };
 
   const createArena = async () => {
@@ -220,7 +236,7 @@ export default function Home() {
   };
 
   if (selected && wallet) {
-    return <ArenaView arenaPubkey={selected} wallet={wallet} onBack={() => setSelected(null)} />;
+    return <ArenaView arenaPubkey={selected} wallet={wallet} onBack={closeArena} />;
   }
 
   return (
@@ -487,7 +503,8 @@ export default function Home() {
           </button>
           <p className="hint">
             The arena is a PDA on Solana. Joining pays the entry fee into a vault; locking delegates
-            the account to a MagicBlock rollup where trades cost nothing.
+            the account to a MagicBlock rollup where trades cost nothing. Arenas fill with real
+            wallets only — no bots join on their own, so invite a second player before locking.
           </p>
         </div>
       </div>
