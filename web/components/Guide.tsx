@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useI18n } from "@/lib/i18n";
 
 export type GuideStep = {
   /** CSS selector of the element to spotlight. Omit for a centered card. */
@@ -33,6 +34,7 @@ export default function Guide({
   const [idx, setIdx] = useState(0);
   const [rect, setRect] = useState<Rect | null>(null);
   const [mounted, setMounted] = useState(false);
+  const { c } = useI18n();
 
   // Stable signature: the parent can pass a fresh array on every render.
   const signature = useMemo(() => steps.map((s) => `${s.target ?? "-"}:${s.title}`).join("|"), [steps]);
@@ -116,7 +118,7 @@ export default function Guide({
     : Math.max(14, vw / 2 - tipW / 2);
 
   return createPortal(
-    <div className="guide-root" role="dialog" aria-modal="true" aria-label="Guided tour">
+    <div className="guide-root" role="dialog" aria-modal="true" aria-label={c.guideUi.aria}>
       {rect ? (
         <div
           className="guide-hole"
@@ -133,11 +135,9 @@ export default function Guide({
 
       <div className="guide-card" style={{ top, left, width: tipW }} onClick={(e) => e.stopPropagation()}>
         <div className="guide-meta">
-          <span className="guide-step">
-            step {idx + 1} / {steps.length}
-          </span>
+          <span className="guide-step">{c.guideUi.stepOf(idx + 1, steps.length)}</span>
           <button className="guide-skip" onClick={() => finish(true)}>
-            skip tour
+            {c.guideUi.skip}
           </button>
         </div>
 
@@ -145,13 +145,13 @@ export default function Guide({
         <p className="guide-body">{step.body}</p>
         {step.why && (
           <p className="guide-why">
-            <b>Why:</b> {step.why}
+            <b>{c.guideUi.why}</b> {step.why}
           </p>
         )}
 
         <div className="guide-actions">
           <button className="guide-back" disabled={idx === 0} onClick={() => setIdx((v) => Math.max(0, v - 1))}>
-            back
+            {c.guideUi.back}
           </button>
           <div className="guide-dots">
             {steps.map((s, i) => (
@@ -160,11 +160,11 @@ export default function Guide({
           </div>
           {idx === steps.length - 1 ? (
             <button className="guide-next" onClick={() => finish(false)}>
-              got it
+              {c.guideUi.gotIt}
             </button>
           ) : (
             <button className="guide-next" onClick={() => setIdx((v) => Math.min(steps.length - 1, v + 1))}>
-              next →
+              {c.guideUi.next}
             </button>
           )}
         </div>

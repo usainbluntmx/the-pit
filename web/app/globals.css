@@ -2130,3 +2130,75 @@ a.brand-text {
 .actions:empty {
   display: none;
 }
+
+/* ----------------------------- language switch --------------------------- */
+
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel);
+}
+
+.lang-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--dim);
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  padding: 5px 9px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.lang-switch button:hover {
+  color: var(--text);
+}
+
+.lang-switch button.on {
+  background: var(--amber);
+  color: #140c00;
+}
+
+.land-nav-links .lang-switch {
+  margin-right: -6px;
+}
+
+@media (max-width: 560px) {
+  .land-nav .brand-sub {
+    display: none;
+  }
+  .land-nav-links {
+    gap: 12px;
+  }
+}
+
+/* El botón de la nav heredaba el gris de los links: sobre ámbar no alcanzaba contraste. */
+.land-nav-links a.btn {
+  color: #140c00;
+}
+
+.brand-name {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .land-nav-links .btn {
+    min-width: 0;
+    padding: 11px 14px;
+    font-size: 11px;
+  }
+}
+
+/* En móvil el CTA de la nav no cabe junto al switch: el hero ya tiene el suyo. */
+@media (max-width: 560px) {
+  .land-nav-links > a.btn {
+    display: none;
+  }
+}

@@ -5,7 +5,9 @@ import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import Link from "next/link";
 import ArenaView from "@/components/ArenaView";
 import Guide, { type GuideStep } from "@/components/Guide";
+import { LangSwitch } from "@/components/LangSwitch";
 import { handleOf } from "@/components/Bits";
+import { useI18n } from "@/lib/i18n";
 import {
   Arena,
   type SeriesAccount,
@@ -80,40 +82,13 @@ export default function Home() {
   const [maxPlayers, setMaxPlayers] = useState(8);
   const [asset, setAsset] = useState("SOL");
   const [guideOpen, setGuideOpen] = useState(false);
+  const { c } = useI18n();
 
   const guideSteps: GuideStep[] = [
-    {
-      target: '[data-guide="wallet"]',
-      title: "This is your wallet",
-      body:
-        "Connect Phantom, Solflare or Backpack. The address and the SOL balance on the right are yours — the app never creates one for you.",
-      why:
-        "Nothing is custodial: every transaction is signed inside your extension and the enclave token is signed the same way. If the balance is low, the airdrop button appears right here.",
-    },
-    {
-      target: '[data-guide="arenas"]',
-      title: "The board",
-      body:
-        "OPEN means seats are available, LIVE means the round is already running on the rollup, CLOSED means the pot was paid out.",
-      why:
-        "The list merges the Solana base layer with the three devnet rollups: a delegated arena disappears from the base scan, so a single source would hide every live round.",
-    },
-    {
-      target: '[data-guide="arena-card"]',
-      title: "Enter a table",
-      body:
-        "Click a card to open that arena. The URL turns into /play?arena=… so you can send the exact table to another player.",
-      why:
-        "A round cannot start alone: it needs two seats. The invite link is how the second wallet gets in.",
-    },
-    {
-      target: '[data-guide="host"]',
-      title: "Host your own arena",
-      body:
-        "Choose entry fee, round length and seats, then create. As the host you lock the arena once at least two players are seated.",
-      why:
-        "The entry fee goes into an escrow vault owned by the program, not by you. The host can start the clock but can never touch the pot.",
-    },
+    { target: '[data-guide="wallet"]', ...c.play.guide.wallet },
+    { target: '[data-guide="arenas"]', ...c.play.guide.board },
+    { target: '[data-guide="arena-card"]', ...c.play.guide.enter },
+    { target: '[data-guide="host"]', ...c.play.guide.host },
   ];
 
   const base = useMemo(() => baseConnection(), []);
@@ -176,7 +151,7 @@ export default function Home() {
       const w = await connectWallet(id);
       setWallet(w);
       setPicking(false);
-      setNotice(`${w.label} connected`);
+      setNotice(c.play.connectedWith(w.label));
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
@@ -197,10 +172,10 @@ export default function Home() {
     setError(null);
     try {
       await requestAirdrop(wallet.publicKey, 1);
-      setNotice("1 SOL requested from the devnet faucet");
+      setNotice(c.play.airdropRequested);
       setBalance((await base.getBalance(wallet.publicKey)) / LAMPORTS_PER_SOL);
     } catch (e: any) {
-      setError(`${e?.message ?? String(e)} — you can also use https://faucet.solana.com`);
+      setError(c.common.airdropFailed(e?.message ?? String(e)));
     } finally {
       setBusy(null);
     }
@@ -208,7 +183,7 @@ export default function Home() {
 
   const openArena = (key: PublicKey) => {
     if (!wallet) {
-      setError("Connect a wallet to enter an arena");
+      setError(c.play.connectToEnter);
       setPicking(true);
       return;
     }
@@ -287,17 +262,18 @@ export default function Home() {
     <div className="shell">
       <div className="grid-bg" />
       <div className="topbar">
-        <Link className="brand" href="/" title="back to the landing">
+        <Link className="brand" href="/" title={c.common.backToLanding}>
           <div className="brand-mark">P</div>
           <div>
             <div className="brand-name">THE PIT</div>
-            <div className="brand-sub">private instant trading · solana devnet</div>
+            <div className="brand-sub">private instant trading · {c.common.devnet}</div>
           </div>
         </Link>
         {wallet ? (
           <div className="wallet-box" data-guide="wallet">
-            <button className="help-btn" onClick={() => setGuideOpen(true)} title="Replay the guided tour">
-              ? guide
+            <LangSwitch />
+            <button className="help-btn" onClick={() => setGuideOpen(true)} title={c.common.replayTour}>
+              {c.common.guide}
             </button>
             <span className="pill mono">{balance.toFixed(3)} SOL</span>
             <span className="pill mono">{shortKey(wallet.publicKey)}</span>
@@ -309,48 +285,45 @@ export default function Home() {
                 setTimeout(() => setCopied(false), 1500);
               }}
             >
-              {copied ? "copied" : "copy address"}
+              {copied ? c.common.copied : c.common.copyAddress}
             </button>
             <button className="copy" onClick={disconnect}>
-              disconnect
+              {c.common.disconnect}
             </button>
           </div>
         ) : (
           <div className="wallet-box" data-guide="wallet">
-            <button className="help-btn" onClick={() => setGuideOpen(true)} title="Start the guided tour">
-              ? guide
+            <LangSwitch />
+            <button className="help-btn" onClick={() => setGuideOpen(true)} title={c.common.startTour}>
+              {c.common.guide}
             </button>
             <button className="btn" onClick={() => setPicking(true)}>
-              Connect wallet
+              {c.play.connectTitle}
             </button>
           </div>
         )}
       </div>
 
       <div className="hero">
-        <div className="kicker">Entertainment finance · Blitz v10</div>
+        <div className="kicker">{c.hero.kicker}</div>
         <h1>
-          Same bankroll.
+          {c.play.titleA}
           <br />
-          Real prices. <em>One pot.</em>
+          {c.play.titleB} <em>{c.play.titleEm}</em>
         </h1>
-        <p className="lede">
-          A trading arena where everyone starts with 1,000 credits and ten minutes on the clock.
-          Trades execute inside a MagicBlock rollup — gasless, 10ms — and the podium splits the
-          escrow. Your book stays sealed until the bell.
-        </p>
+        <p className="lede">{c.play.lede}</p>
       </div>
 
       {picking && !wallet && (
         <div className="panel" style={{ marginTop: 4 }}>
           <div className="panel-head">
-            <span>Connect a wallet</span>
+            <span>{c.play.connectTitle}</span>
             <span>devnet</span>
           </div>
           <div style={{ padding: 16, display: "grid", gap: 10 }}>
             {wallets.length === 0 && (
               <p className="hint" style={{ margin: 0 }}>
-                No Solana wallet detected in this browser. Install one and reload:
+                {c.play.noWallet}
               </p>
             )}
             {wallets.map((w) => (
@@ -360,7 +333,7 @@ export default function Home() {
                 disabled={connecting}
                 onClick={() => connect(w.id)}
               >
-                {connecting ? "connecting…" : `Connect ${w.label}`}
+                {connecting ? c.play.connecting : c.play.connectWith(w.label)}
               </button>
             ))}
             {["phantom", "solflare", "backpack"].map((id) => (
@@ -372,13 +345,11 @@ export default function Home() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Get {id.charAt(0).toUpperCase() + id.slice(1)}
+                {c.play.getWallet(id.charAt(0).toUpperCase() + id.slice(1))}
               </a>
             ))}
             <p className="hint" style={{ margin: 0 }}>
-              Your keys never leave the extension: the app only asks it to sign transactions and the
-              enclave challenge. You need devnet SOL to pay the entry fee — there is an airdrop
-              button under the wallet once connected.
+              {c.play.connectHint}
             </p>
           </div>
         </div>
@@ -387,12 +358,12 @@ export default function Home() {
       {wallet && balance < 0.05 && (
         <div className="panel" style={{ marginTop: 4 }}>
           <div className="panel-head">
-            <span>Low devnet balance</span>
+            <span>{c.play.lowBalance}</span>
             <span>{balance.toFixed(3)} SOL</span>
           </div>
           <div style={{ padding: 16 }}>
             <button className="btn ghost" disabled={busy !== null} onClick={airdrop}>
-              {busy === "airdrop" ? "requesting…" : "Request 1 devnet SOL"}
+              {busy === "airdrop" ? c.play.requesting : c.play.requestOne}
             </button>
           </div>
         </div>
@@ -404,7 +375,7 @@ export default function Home() {
       <div className="grid" data-guide="arenas">
         {arenas.length === 0 && (
           <div className="empty" style={{ gridColumn: "1 / -1" }}>
-            no public arenas on the board right now. Hosted arenas appear here once they settle on base.
+            {c.play.emptyBoard}
           </div>
         )}
         {arenas.map((a) => {
@@ -417,22 +388,20 @@ export default function Home() {
               onClick={() => openArena(a.publicKey)}
             >
               <div className="card-top">
-                <span className={`tag ${st}`}>{st}</span>
+                <span className={`tag ${st}`}>{c.status[st]}</span>
                 <span className="mono" style={{ fontSize: 11, color: "var(--dim)" }}>
                   {shortKey(a.publicKey)}
                 </span>
               </div>
               <div className="card-pot">{fmtSol(sol(a.pot))} SOL</div>
               <div className="card-meta">
-                <span>
-                  {a.playerCount}/{a.maxPlayers} players
-                </span>
+                <span>{c.play.players(a.playerCount, a.maxPlayers)}</span>
                 <span>{a.duration.toString()}s</span>
                 <span>{feedNameOf(a.feed)}</span>
               </div>
               <div className="card-foot">
-                <span>entry {fmtSol(sol(a.entryFee), 3)} SOL</span>
-                <span>{st === "closed" || st === "settled" ? "results →" : "open →"}</span>
+                <span>{c.play.entry(fmtSol(sol(a.entryFee), 3))}</span>
+                <span>{st === "closed" || st === "settled" ? c.play.results : c.play.open}</span>
               </div>
             </div>
           );
@@ -442,8 +411,8 @@ export default function Home() {
       {known.length > 0 && (
         <div className="panel" style={{ marginTop: 18 }}>
           <div className="panel-head">
-            <span>Your arenas</span>
-            <span>this browser</span>
+            <span>{c.play.yourArenas}</span>
+            <span>{c.play.thisBrowser}</span>
           </div>
           {known.map((k) => (
             <div
@@ -455,7 +424,7 @@ export default function Home() {
               <span className="who mono" style={{ fontSize: 12 }}>
                 {k}
               </span>
-              <span className="pnl">open →</span>
+              <span className="pnl">{c.play.open}</span>
             </div>
           ))}
         </div>
@@ -464,8 +433,8 @@ export default function Home() {
       {seriesList.length > 0 && (
         <div className="panel" style={{ marginTop: 18 }}>
           <div className="panel-head">
-            <span>Series</span>
-            <span>points on-chain</span>
+            <span>{c.play.series}</span>
+            <span>{c.play.pointsOnChain}</span>
           </div>
           {seriesList.map((sr) => {
             const rows = [...sr.standings].sort((a, b) => b.points - a.points).slice(0, 4);
@@ -474,20 +443,18 @@ export default function Home() {
                 <div className="series-head">
                   <span className="mono">{sr.nonce}</span>
                   <span className={`pill ${sr.rounds >= sr.maxRounds ? "" : "live"}`}>
-                    {sr.rounds}/{sr.maxRounds} rounds
+                    {c.play.rounds(sr.rounds, sr.maxRounds)}
                   </span>
                 </div>
-                {rows.length === 0 && <div className="hint">no rounds recorded yet</div>}
+                {rows.length === 0 && <div className="hint">{c.play.noRounds}</div>}
                 {rows.map((r, i) => (
                   <div className="row" key={r.player.toBase58()}>
                     <span className="rank mono">{String(i + 1).padStart(2, "0")}</span>
                     <span className="who">
                       {handleOf(r.player.toBase58())}
-                      <small>
-                        {r.podiums} podiums · {r.survived} survived · {r.bites} bitten
-                      </small>
+                      <small>{c.play.standings(r.podiums, r.survived, r.bites)}</small>
                     </span>
-                    <span className="pnl up">{r.points} pts</span>
+                    <span className="pnl up">{c.play.pts(r.points)}</span>
                   </div>
                 ))}
               </div>
@@ -498,8 +465,8 @@ export default function Home() {
 
       <div className="panel" style={{ marginTop: 22 }} data-guide="host">
         <div className="panel-head">
-          <span>Host an arena</span>
-          <span>base layer</span>
+          <span>{c.play.hostTitle}</span>
+          <span>{c.play.baseLayer}</span>
         </div>
         <div
           style={{
@@ -511,7 +478,7 @@ export default function Home() {
         >
           <label className="field" style={{ margin: 0 }}>
             <div className="field-label">
-              <span>Entry fee (SOL)</span>
+              <span>{c.play.entryFee}</span>
             </div>
             <input
               type="number"
@@ -524,7 +491,7 @@ export default function Home() {
           </label>
           <label className="field" style={{ margin: 0 }}>
             <div className="field-label">
-              <span>Round (seconds)</span>
+              <span>{c.play.roundSeconds}</span>
             </div>
             <input
               type="number"
@@ -537,7 +504,7 @@ export default function Home() {
           </label>
           <label className="field" style={{ margin: 0 }}>
             <div className="field-label">
-              <span>Seats</span>
+              <span>{c.play.seatsLabel}</span>
             </div>
             <input
               type="number"
@@ -550,7 +517,7 @@ export default function Home() {
           </label>
           <label className="field" style={{ margin: 0 }}>
             <div className="field-label">
-              <span>Market</span>
+              <span>{c.play.marketLabel}</span>
             </div>
             <select
               value={asset}
@@ -572,25 +539,21 @@ export default function Home() {
             onClick={() => setSeriesMode((v) => !v)}
           >
             <span className="toggle-dot" />
-            {seriesMode ? "Series · 3 rounds, cumulative points" : "Single round"}
+            {seriesMode ? c.play.seriesToggle : c.play.singleToggle}
           </button>
         </div>
         <div style={{ padding: "0 16px 16px" }}>
           <button className="btn" disabled={busy !== null} onClick={createArena}>
-            {busy === "create" ? "creating…" : "Create arena"}
+            {busy === "create" ? c.play.creating : c.play.create}
           </button>
           <p className="hint">
-            The arena is a PDA on Solana. Joining pays the entry fee into a vault; locking delegates
-            the account to a MagicBlock rollup where trades cost nothing. Arenas fill with real
-            wallets only — no bots join on their own, so invite a second player before locking.
+            {c.play.hostHint}
           </p>
         </div>
       </div>
 
       <div className="foot-note">
-        {wallet
-          ? `Connected with ${wallet.label} on devnet. Every action — join, trade, settle — is a transaction signed by your wallet. Program: `
-          : "Connect a Solana wallet to play. Nothing is custodial: the app never sees your keys. Program: "}
+        {wallet ? c.play.footerConnected(wallet.label) : c.play.footerDisconnected}
         <span className="mono">4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar</span>.
       </div>
 
