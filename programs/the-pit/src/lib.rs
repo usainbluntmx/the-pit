@@ -122,6 +122,15 @@ pub struct RoundSettled {
     pub winner_count: u8,
 }
 
+#[event]
+pub struct SoloSettled {
+    pub arena: Pubkey,
+    pub player: Pubkey,
+    pub equity: i64,
+    pub multiplier_bps: u16,
+    pub payout: u64,
+}
+
 #[ephemeral]
 #[program]
 pub mod the_pit {
@@ -140,8 +149,9 @@ pub mod the_pit {
     ) -> Result<()> {
         validate_nonce(&nonce)?;
         require!(entry_fee > 0, PitError::InvalidParam);
+        // 1 seat = solo run against the market (the house is the counterparty).
         require!(
-            (2..=MAX_SEATS as u8).contains(&max_players),
+            (1..=MAX_SEATS as u8).contains(&max_players),
             PitError::InvalidParam
         );
         require!(
@@ -389,7 +399,8 @@ pub mod the_pit {
             PitError::Unauthorized
         );
         require!(arena.status == ArenaStatus::Open, PitError::ArenaNotOpen);
-        require!(arena.player_count >= 2, PitError::NotEnoughPlayers);
+        let min_players: u8 = if arena.max_players == 1 { 1 } else { 2 };
+        require!(arena.player_count >= min_players, PitError::NotEnoughPlayers);
 
         let now = Clock::get()?.unix_timestamp;
         arena.start_at = now;
@@ -576,7 +587,13 @@ pub mod the_pit {
                 holder = seat.player;
             }
         }
-        arena.lst_winner = if holding == 1 { holder } else { Pubkey::default() };
+        // El bono "last one standing" no aplica en solo: el único asiento no
+        // puede llevarse un 10 % de su propia entrada.
+        arena.lst_winner = if holding == 1 && count > 1 {
+            holder
+        } else {
+            Pubkey::default()
+        };
 
         arena.winner_count = winners;
         arena.status = ArenaStatus::Settled;
@@ -833,6 +850,10 @@ pub mod the_pit {
             ctx.accounts.arena.status == ArenaStatus::Settled,
             PitError::NotSettled
         );
+        require!(
+            ctx.accounts.arena.player_count > 1,
+            PitError::SoloNeedsSettleSolo
+        );
 
         let pot = ctx.accounts.arena.pot;
         require!(pot > 0, PitError::InvalidParam);
@@ -922,6 +943,107 @@ pub mod the_pit {
             winner: results[0].player,
             pot,
             winner_count: winners as u8,
+        });
+        Ok(())
+    }
+
+    /// BASE LAYER. Pay a solo run: the house PDA is the counterparty.
+    ///
+    /// The vault always holds the player's entry. The multiplier decides how
+    /// much of it comes back and how much the house adds (or keeps):
+    /// `payout = entry * bps / 10_000`, capped at 3× by `solo_multiplier_bps`.
+    /// Permissionless and idempotent.
+    pub fn settle_solo<'a>(ctx: Context<'a, SettleSolo<'a>>, _nonce: String) -> Result<()> {
+        require!(
+            ctx.accounts.arena.status == ArenaStatus::Settled,
+            PitError::NotSettled
+        );
+        require!(ctx.accounts.arena.player_count == 1, PitError::NotSoloArena);
+
+        let entry = ctx.accounts.arena.entry_fee;
+        let result = ctx.accounts.arena.results[0];
+        require_keys_eq!(
+            ctx.accounts.player.key(),
+            result.player,
+            PitError::InvalidParam
+        );
+
+        let bps = solo_multiplier_bps(result.equity);
+        let payout = ((entry as u128) * (bps as u128) / 10_000) as u64;
+
+        let arena_key = ctx.accounts.arena.key();
+        let vault_bump = ctx.accounts.arena.vault_bump;
+        let vault_seeds: &[&[u8]] = &[VAULT_SEED, arena_key.as_ref(), &[vault_bump]];
+
+        // The vault can only cover the entry itself; everything above it is the house.
+        let from_vault = payout.min(entry);
+        if from_vault > 0 {
+            let ix = system_instruction::transfer(
+                &ctx.accounts.vault.key(),
+                ctx.accounts.player.key,
+                from_vault,
+            );
+            invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.vault.to_account_info(),
+                    ctx.accounts.player.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                ],
+                &[vault_seeds],
+            )?;
+        }
+
+        if payout > entry {
+            let extra = payout - entry;
+            require!(
+                ctx.accounts.house.lamports() >= extra,
+                PitError::HouseUnderfunded
+            );
+            let house_seeds: &[&[u8]] = &[HOUSE_SEED, &[ctx.bumps.house]];
+            let ix = system_instruction::transfer(
+                &ctx.accounts.house.key(),
+                ctx.accounts.player.key,
+                extra,
+            );
+            invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.house.to_account_info(),
+                    ctx.accounts.player.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                ],
+                &[house_seeds],
+            )?;
+        }
+
+        // Losing run: the entry goes to the house, which keeps the game solvent.
+        if payout < entry {
+            let keep = entry - payout;
+            let ix = system_instruction::transfer(
+                &ctx.accounts.vault.key(),
+                &ctx.accounts.house.key(),
+                keep,
+            );
+            invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.vault.to_account_info(),
+                    ctx.accounts.house.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                ],
+                &[vault_seeds],
+            )?;
+        }
+
+        ctx.accounts.arena.status = ArenaStatus::Closed;
+
+        emit!(SoloSettled {
+            arena: arena_key,
+            player: result.player,
+            equity: result.equity,
+            multiplier_bps: bps,
+            payout,
         });
         Ok(())
     }
@@ -1166,6 +1288,23 @@ pub struct Settle<'info> {
     /// CHECK: receives the rake
     #[account(mut, address = arena.creator)]
     pub creator: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(nonce: String)]
+pub struct SettleSolo<'info> {
+    #[account(mut, seeds = [ARENA_SEED, nonce.as_bytes()], bump = arena.bump)]
+    pub arena: Box<Account<'info, Arena>>,
+    /// CHECK: escrow vault, signed by PDA seeds
+    #[account(mut, seeds = [VAULT_SEED, arena.key().as_ref()], bump)]
+    pub vault: UncheckedAccount<'info>,
+    /// CHECK: house PDA, the counterparty of every solo run
+    #[account(mut, seeds = [HOUSE_SEED], bump)]
+    pub house: UncheckedAccount<'info>,
+    /// CHECK: must be the winner stored in results[0]
+    #[account(mut)]
+    pub player: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 

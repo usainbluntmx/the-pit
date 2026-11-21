@@ -64,6 +64,24 @@ export const ES_UI: Record<string, string> = {
     "la arena se delega a MagicBlock, arranca el reloj y el libro queda sellado.",
   "joining…": "uniéndose…",
   "Join for {amount} SOL": "Unirse por {amount} SOL",
+  "Join for {amount} SOL and run against the market":
+    "Únete por {amount} SOL y corre contra el mercado",
+  "You are in — lock the arena to start the clock":
+    "Ya estás dentro: bloquea la arena para arrancar el reloj",
+  "This is a solo run: one seat, no invite. Lock it to start the clock.":
+    "Es una corrida solo: un asiento y sin invitación. Bloquéala para arrancar el reloj.",
+  "The market paid your run — start the next one":
+    "El mercado pagó tu corrida: arranca la siguiente",
+  "Solo run settled — start the next one":
+    "Corrida solo liquidada: arranca la siguiente",
+  "Round closed. The house paid your multiplier.":
+    "Ronda cerrada. La casa pagó tu multiplicador.",
+  "need 1 player": "falta 1 jugador",
+  "Solo payout": "Pago solo",
+  "solo payout · 1.00× / 1.25× / 1.50× / 2.00× / 3.00×":
+    "pago solo · 1.00× / 1.25× / 1.50× / 2.00× / 3.00×",
+  "Settle: the house pays your multiplier out of the entry and its own balance.":
+    "Liquida: la casa paga tu multiplicador con la entrada y su propio saldo.",
   "locking…": "bloqueando…",
   "Lock & start round": "Bloquear y arrancar",
   "link copied ✓": "link copiado ✓",

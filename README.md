@@ -8,7 +8,7 @@ y al cerrar la ronda el podio se lleva el pozo del escrow.
 
 ![PIT — landing](docs/screens/16-landing.png)
 
-**Live:** https://usainbluntmx.github.io/the-pit/ · **Código:** https://github.com/usainbluntmx/the-pit
+**Live:** https://the-pit.zerotwolabs.xyz/ · **Código:** https://github.com/usainbluntmx/the-pit
 **Demo (74 s):** [`docs/demo.mp4`](docs/demo.mp4) · [`docs/demo-sin-voz.mp4`](docs/demo-sin-voz.mp4)
 
 Edición: **Solana Blitz v10 — Entertainment Finance** (20–27 nov 2026).
@@ -97,7 +97,7 @@ Feeds devnet (PDA `["price_feed","pyth-lazer",<id>]` del programa `PriCems…`):
 | BTCUSD | 1 | `71wtTRDY8Gxgw56bXFt2oc6qeAbTxzStdNiC425Z51sr` |
 | ETHUSD | 2 | `5vaYr1hpv8yrSpu8w3K95x22byYxUJCCNCSYJtqVWPvG` |
 
-## Instrucciones (17)
+## Instrucciones (18 de juego + `process_undelegation` del SDK)
 
 | IX | Capa | Quién |
 |---|---|---|
@@ -109,7 +109,8 @@ Feeds devnet (PDA `["price_feed","pyth-lazer",<id>]` del programa `PriCems…`):
 | `close_position(nonce)` | ER | jugador |
 | `end_round(nonce)` | ER | cualquiera, tras `end_at` |
 | `commit_round(nonce)` | ER | cualquiera |
-| `settle(nonce)` | base | cualquiera, permissionless e idempotente |
+| `settle(nonce)` | base | cualquiera, permissionless e idempotente (2+ asientos) |
+| `settle_solo(nonce)` | base | cualquiera, permissionless e idempotente (1 asiento, paga la casa) |
 | `init_permission` | ER | arena (paga su propio permiso TEE) |
 | `set_privacy(bool)` | ER | creador o jugador |
 | `close_permission` | ER | creador o jugador (devuelve el rent) |
@@ -136,6 +137,13 @@ Qué hace:
 - **Wallet**: conecta la extensión del jugador (Phantom, Solflare, Backpack) y firma
   cada transacción con ella; reconecta solo al recargar (`onlyIfTrusted`). La llave
   nunca pasa por la app. Incluye botón de airdrop para devnet.
+
+- **Trading account**: al conectar, la app puede generar un keypair desechable en el
+  navegador, pedirle a la wallet principal **una sola firma** para vincularlo y
+  fondearlo con 0.05 SOL desde `/api/faucet`. Desde ahí las órdenes las firma la
+  trading account, sin un popup por trade. La UI permite volver a la wallet principal
+  y retirar el saldo. Es devnet: la llave vive en `localStorage`; en mainnet esto se
+  reemplaza por una session key on-chain revocable.
 
 - **Lobby**: lista todas las arenas, incluidas las que están delegadas. Una cuenta
   delegada desaparece del `getProgramAccounts` de la capa base (su owner pasa a ser
@@ -321,6 +329,29 @@ Y una ronda jugada desde la UI, con mordidas reales:
         · 4kp5RT 10 pts | podiums 1 | survived 0 | bites 1
 ```
 
+## Modo solo: el mercado como contraparte
+
+Una arena con **un solo asiento** (`max_players = 1`) es una corrida contra el mercado.
+No hay pozo compartido: la contraparte es la **casa**, una PDA del programa
+(`PDA(["house"])`) fondeada con SOL de devnet.
+
+- El jugador paga la entrada al vault, igual que en multijugador.
+- Al campanazo, `end_round` marca la equity final y `settle_solo` aplica la tabla:
+  `< 1000` pierde la entrada · `1000–1049` devuelve 1× · `1050–1099` 1.25× ·
+  `1100–1199` 1.5× · `1200–1299` 2× · `≥1300` 3×.
+- El vault paga hasta 1×; lo que exceda sale de la casa. Si la corrida pierde,
+  la entrada se queda en la casa. Tope duro: 3× por ronda.
+- `last one standing` no aplica en solo (el único asiento no puede llevarse un 10 %
+  de su propia entrada), y `settle` rechaza arenas de un asiento para que nadie
+  cobre por la puerta equivocada.
+
+Verificado en LiteSVM (`cargo test -p the-pit --test solo_settle`) con las tres ramas:
+victoria (vault + casa), derrota (entrada a la casa) y empate (vault devuelve la entrada),
+más el rechazo de `settle` en una arena solo. Y en devnet con `scripts/e2e-solo.ts`:
+corrida de 60 s (`1×`, jugador +0.01 SOL) y de 120 s (`0×`, casa +0.01 SOL).
+
+Casa en devnet: `7VgmHJJxBq4UxpfW3iy8KzUP6vRTu7RDWAQz2d3Bg8hp`.
+
 ## Fiebre: cuando pierdes el control de tus órdenes
 
 Cada asiento lleva una **presión** (0..100). Sube cuando el pozo te saca (+40) y cuando
@@ -426,7 +457,7 @@ solana program close --buffers
 
 Hecho y verificado con firmas en devnet:
 
-- [x] Programa completo (17 instrucciones) y build SBF
+- [x] Programa completo (19 instrucciones en el IDL) y build SBF
 - [x] Cliente TS de doble conexión + runbook en devnet (`scripts/e2e.ts`)
 - [x] Deploy devnet y ciclo end-to-end
 - [x] Private ER (TEE) — pozo sellado, lectura `null` para wallets fuera de la lista
@@ -434,10 +465,13 @@ Hecho y verificado con firmas en devnet:
 - [x] Mordida automática, last-one-standing, serie de 3 y fiebre
 - [x] Frontend (landing + lobby, arena en vivo, ticket, reveal, controles de ciclo completo)
 - [x] Landing y navegación (`/` ↔ `/play`)
+- [x] i18n ES/EN con switch persistente en landing, lobby y arena
+- [x] Modo solo contra el mercado (`settle_solo` + casa PDA, 4 tests en LiteSVM)
+- [x] Trading account con faucet propio (`/api/faucet`, firma de vinculación + rate limit)
 
 Pendiente para la submission del Blitz v10 (deadline 27 nov 2026, 15:00 CET):
 
 - [x] Repo git + publicación en GitHub
-- [x] Deploy público del web — https://usainbluntmx.github.io/the-pit/
+- [x] Deploy público del web — https://the-pit.zerotwolabs.xyz/ (Dokploy, auto-deploy en cada push a `main`)
 - [x] Video demo corto y proof of work para el formulario
 - [ ] Enviar el proyecto en `build.magicblock.app/?stage=blitz#submit`

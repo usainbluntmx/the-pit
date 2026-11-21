@@ -58,6 +58,57 @@ pub const SHARES: [[u16; 3]; 4] = [
     [6_000, 2_500, 1_500],
 ];
 
+/* -------------------------------- solo mode ------------------------------- */
+
+/// The house PDA is the counterparty of a solo run: it pays the upside and
+/// collects the entry when the player ends below the starting bankroll.
+pub const HOUSE_SEED: &[u8] = b"house";
+
+/// Hard cap for a solo payout: 3× the entry. Keeps the house from draining on
+/// a single outlier round and makes the risk easy to explain.
+pub const SOLO_CAP_BPS: u16 = 30_000;
+
+/// Multiplier (in bps of the entry) for a final equity in `FIXED` units.
+/// `< 1000` loses the entry, `1000..1049` returns it, then 1.25×, 1.5×, 2×, 3×.
+pub fn solo_multiplier_bps(equity: i64) -> u16 {
+    let e = equity as i128;
+    let k = FIXED as i128;
+    if e < 1_000 * k {
+        0
+    } else if e < 1_050 * k {
+        10_000
+    } else if e < 1_100 * k {
+        12_500
+    } else if e < 1_200 * k {
+        15_000
+    } else if e < 1_300 * k {
+        20_000
+    } else {
+        SOLO_CAP_BPS
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn solo_tiers() {
+        let k = FIXED as i64;
+        assert_eq!(solo_multiplier_bps(999 * k), 0);
+        assert_eq!(solo_multiplier_bps(1_000 * k), 10_000);
+        assert_eq!(solo_multiplier_bps(1_049 * k), 10_000);
+        assert_eq!(solo_multiplier_bps(1_050 * k), 12_500);
+        assert_eq!(solo_multiplier_bps(1_099 * k), 12_500);
+        assert_eq!(solo_multiplier_bps(1_100 * k), 15_000);
+        assert_eq!(solo_multiplier_bps(1_199 * k), 15_000);
+        assert_eq!(solo_multiplier_bps(1_200 * k), 20_000);
+        assert_eq!(solo_multiplier_bps(1_299 * k), 20_000);
+        assert_eq!(solo_multiplier_bps(1_300 * k), 30_000);
+        assert_eq!(solo_multiplier_bps(5_000 * k), 30_000);
+    }
+}
+
 /* ------------------------------- series ---------------------------------- */
 
 /// Una serie son 3 rondas encadenadas con puntos acumulados.

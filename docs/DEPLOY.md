@@ -147,6 +147,10 @@ dispara build y deploy. Sin GitHub App, usa el webhook que muestra Dokploy en
 
 ## Deploy actual: GitHub Pages (export estático)
 
+> **El deploy oficial es Dokploy:** https://the-pit.zerotwolabs.xyz/ — cada push a `main`
+> reconstruye la app con `next build` y el API route del faucet. Esta sección queda como
+> respaldo estático: Pages no ejecuta `/api/faucet`, así que la trading account no fondea ahí.
+
 El frontend es 100% cliente (no hay API routes), así que se publica como export estático
 en GitHub Pages, sin servidor ni contenedor:
 
@@ -176,3 +180,31 @@ git push -f origin gh-pages
 un `next start` sirviendo, el servidor queda con chunks viejos y el navegador revienta
 con "Application error: a client-side exception". Para QA: mata el server, reconstruye
 y vuelve a arrancar; o usa `distDir` distinto.
+
+## Faucet de trading accounts (Dokploy)
+
+El botón **Create & fund trading account** llama a `POST /api/faucet`. La ruta firma
+una transferencia desde un keypair de servidor, así que necesita una variable en el
+servicio de Dokploy:
+
+```
+FAUCET_SECRET_KEY=[12,34,...]   # array JSON de 64 bytes, o base58
+```
+
+- El keypair vive en `~/.config/pit/faucet.json` (fuera del repo) y su valor para el
+  panel está en `~/.config/pit/faucet.env`.
+- **No** se commitea: `.env*` está en `.gitignore`.
+- Fondea la wallet del faucet con ~2 SOL de devnet; cada cuenta recibe 0.05 SOL.
+- Límites en memoria: 1 fondeo por wallet cada 6 h y 6 por IP cada 6 h. Se reinician
+  con cada deploy; es suficiente para la demo.
+- Si la variable no está, la ruta responde `503 faucet not configured` y la UI lo
+  muestra; la wallet principal sigue funcionando.
+
+## Casa del modo solo
+
+`settle_solo` paga el excedente desde la PDA `["house"]`. Fóndala antes de la demo:
+
+```bash
+solana transfer 7VgmHJJxBq4UxpfW3iy8KzUP6vRTu7RDWAQz2d3Bg8hp 3 \
+  --url https://rpc.magicblock.app/devnet --allow-unfunded-recipient
+```

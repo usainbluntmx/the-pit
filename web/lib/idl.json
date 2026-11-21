@@ -1483,6 +1483,105 @@
       ]
     },
     {
+      "name": "settle_solo",
+      "docs": [
+        "BASE LAYER. Pay a solo run: the house PDA is the counterparty.",
+        "",
+        "The vault always holds the player's entry. The multiplier decides how",
+        "much of it comes back and how much the house adds (or keeps):",
+        "`payout = entry * bps / 10_000`, capped at 3× by `solo_multiplier_bps`.",
+        "Permissionless and idempotent."
+      ],
+      "discriminator": [
+        78,
+        96,
+        3,
+        109,
+        253,
+        59,
+        155,
+        93
+      ],
+      "accounts": [
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ]
+          }
+        },
+        {
+          "name": "house",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  104,
+                  111,
+                  117,
+                  115,
+                  101
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "player",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "shock_callback",
       "docs": [
         "ER. Oracle callback: force-close ONE random seat that is holding risk.",
@@ -1693,6 +1792,19 @@
         242,
         254
       ]
+    },
+    {
+      "name": "SoloSettled",
+      "discriminator": [
+        28,
+        212,
+        233,
+        73,
+        49,
+        60,
+        3,
+        218
+      ]
     }
   ],
   "errors": [
@@ -1830,6 +1942,21 @@
       "code": 6026,
       "name": "RoundAlreadyRecorded",
       "msg": "This round was already recorded in the series"
+    },
+    {
+      "code": 6027,
+      "name": "SoloNeedsSettleSolo",
+      "msg": "A solo run is settled with settle_solo, not settle"
+    },
+    {
+      "code": 6028,
+      "name": "NotSoloArena",
+      "msg": "This instruction only applies to a solo arena"
+    },
+    {
+      "code": 6029,
+      "name": "HouseUnderfunded",
+      "msg": "The house PDA does not hold enough SOL for this payout"
     }
   ],
   "types": [
@@ -2407,6 +2534,34 @@
               "Shock number for this round, so clients can order the kill feed."
             ],
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SoloSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "equity",
+            "type": "i64"
+          },
+          {
+            "name": "multiplier_bps",
+            "type": "u16"
+          },
+          {
+            "name": "payout",
+            "type": "u64"
           }
         ]
       }
