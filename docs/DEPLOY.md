@@ -1,8 +1,8 @@
 # Deploy del frontend en Dokploy
 
 Runbook para publicar `web/` (Next.js 15) en un servidor propio con Dokploy.
-No hay secretos: la llave del jugador se genera en el navegador y vive en
-`localStorage`; el servidor solo sirve HTML/JS.
+No hay secretos: el jugador firma con su wallet (Phantom/Solflare/Backpack) y el
+servidor solo sirve HTML/JS.
 
 ## Datos que usa este deploy
 

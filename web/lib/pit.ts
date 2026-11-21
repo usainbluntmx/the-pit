@@ -1,12 +1,5 @@
 import * as anchor from "@anchor-lang/core";
-import {
-  Connection,
-  Keypair,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  Transaction,
-} from "@solana/web3.js";
-import nacl from "tweetnacl";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, Transaction } from "@solana/web3.js";
 import {
   getAuthToken,
   EPHEMERAL_VAULT_ID,
@@ -281,18 +274,23 @@ export async function readPrice(
 
 /* --------------------------------- writes ------------------------------- */
 
+/** Anything that can pay for and sign a transaction: a connected wallet. */
+export type Signer = {
+  publicKey: PublicKey;
+  signTransaction: (tx: Transaction) => Promise<Transaction>;
+};
+
 export async function sendTx(
   connection: Connection,
   tx: Transaction,
-  payer: Keypair,
-  extras: Keypair[] = [],
+  signer: Signer,
   opts: { skipPreflight?: boolean } = {},
 ): Promise<string> {
-  tx.feePayer = payer.publicKey;
+  tx.feePayer = signer.publicKey;
   const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
   tx.recentBlockhash = blockhash;
-  tx.sign(payer, ...extras);
-  const sig = await connection.sendRawTransaction(tx.serialize(), {
+  const signed = await signer.signTransaction(tx);
+  const sig = await connection.sendRawTransaction(signed.serialize(), {
     skipPreflight: opts.skipPreflight ?? false,
     preflightCommitment: "confirmed",
   });
@@ -428,12 +426,15 @@ export const TEE_URL = process.env.NEXT_PUBLIC_TEE_URL ?? "https://devnet-tee.ma
 export const TEE_VALIDATOR = new PublicKey("MTEWGuqxUpYZGFJQcp8tLN7x5v9BSeoFHYWQQ3n3xzo");
 
 /**
- * Ask the TEE for a challenge, sign it with the wallet and exchange it for a bearer
- * token. The token is scoped to the wallet, so every player needs their own.
+ * Ask the TEE for a challenge, sign it with the connected wallet and exchange it for a
+ * bearer token. The token is scoped to the wallet, so every player needs their own.
  */
-export async function teeToken(kp: Keypair): Promise<string> {
-  const { token } = await getAuthToken(TEE_URL, kp.publicKey, async (message) =>
-    nacl.sign.detached(message, kp.secretKey),
+export async function teeToken(wallet: {
+  publicKey: PublicKey;
+  signMessage: (msg: Uint8Array) => Promise<Uint8Array>;
+}): Promise<string> {
+  const { token } = await getAuthToken(TEE_URL, wallet.publicKey, (message) =>
+    wallet.signMessage(message),
   );
   return token;
 }

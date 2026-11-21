@@ -125,8 +125,8 @@ export default function Landing() {
               <span className="mono">MAD</span>
             </div>
             <div className="land-fever">
-              <span className="mad-badge">fiebre</span>
-              <span className="mad-line">“▞▚▞ NO EXISTE EL ROJO ▞▚▞”</span>
+              <span className="mad-badge">fever</span>
+              <span className="mad-line">“▞▚▞ RED DOES NOT EXIST ▞▚▞”</span>
               <span className="mad-sub">15s · orders inverted</span>
             </div>
             <p className="hint" style={{ marginTop: 14 }}>
@@ -243,8 +243,8 @@ export default function Landing() {
       <section className="land-final">
         <h2>Same bankroll. Real prices. Your nerves.</h2>
         <p>
-          Runs on Solana devnet. Wallet generated in the browser, no extension needed. Bring a friend
-          — an arena needs two seats to start.
+          Runs on Solana devnet. Connect Phantom, Solflare or Backpack, grab devnet SOL from the
+          faucet and bring a friend — an arena needs two seats to start.
         </p>
         <div className="land-cta">
           <Link className="btn" href="/play">

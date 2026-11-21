@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as anchor from "@anchor-lang/core";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   Arena,
   DELEGATION_PROGRAM_ID,
@@ -31,10 +31,11 @@ import {
 } from "@/lib/pit";
 import Link from "next/link";
 import { CountdownRing, EquityBar, Sparkline, handleOf, madLine, thump } from "@/components/Bits";
+import type { Wallet } from "@/lib/wallet";
 
 type Props = {
   arenaPubkey: PublicKey;
-  payer: Keypair;
+  wallet: Wallet;
   onBack: () => void;
 };
 
@@ -45,7 +46,7 @@ const fmtClock = (secs: number) => {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 };
 
-export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
+export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const [arena, setArena] = useState<Arena | null>(null);
   const [price, setPrice] = useState<number | null>(null);
   const [delegated, setDelegated] = useState(false);
@@ -57,7 +58,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  // El aviso es un acuse, no un banner: se va solo.
+  // The notice is an acknowledgement, not a banner: it dismisses itself.
   useEffect(() => {
     if (!notice) return;
     const t = setTimeout(() => setNotice(null), 6000);
@@ -94,7 +95,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
     try {
       const info = await base.getAccountInfo(arenaPubkey);
       if (!info) {
-        setError("arena no encontrada");
+        setError("arena not found");
         return;
       }
       const isDelegated = info.owner.equals(DELEGATION_PROGRAM_ID);
@@ -108,7 +109,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
           let conn = er.connection;
           let current = tee;
           if (isTee && !current) {
-            const token = await teeToken(payer);
+            const token = await teeToken(wallet);
             current = { token, conn: teeConnection(token) };
             setTee(current);
           }
@@ -123,13 +124,13 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
           setSealed(!!(a as any).isPrivate);
           await loadSeries(a.series);
 
-          // ---- la mordida: el pozo ataca solo, sin que nadie tenga que pulsar nada ----
+          // ---- the bite: the pit attacks on its own, nobody has to press anything ----
           const sc = Number((a as any).shockCount ?? 0);
           if (sc > lastShockRef.current) {
             if (lastShockRef.current >= 0) {
               const seatIdx = Number((a as any).shockSeat);
               const victim = a.seats[seatIdx]?.player as any;
-              const mine = victim ? victim.equals(payer.publicKey) : false;
+              const mine = victim ? victim.equals(wallet.publicKey) : false;
               const label = mine
                 ? "THE PIT BIT YOU"
                 : `THE PIT BIT ${victim ? handleOf(victim.toBase58()) : "SOMEONE"}`;
@@ -153,12 +154,12 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
             !crankRef.current
           ) {
             crankRef.current = true;
-            const program = programAt(conn, payer.publicKey);
+            const program = programAt(conn, wallet.publicKey);
             program.methods
               .requestShock(nonceOf(a))
-              .accounts({ payer: payer.publicKey, arena: arenaPubkey, oracleQueue: EPHEMERAL_QUEUE })
+              .accounts({ payer: wallet.publicKey, arena: arenaPubkey, oracleQueue: EPHEMERAL_QUEUE })
               .transaction()
-              .then((tx: any) => sendTx(conn, tx, payer, [], { skipPreflight: true }))
+              .then((tx: any) => sendTx(conn, tx, wallet, { skipPreflight: true }))
               .catch(() => {})
               .finally(() => {
                 window.setTimeout(() => {
@@ -179,12 +180,12 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
-  }, [arenaPubkey, base, payer, tee]);
+  }, [arenaPubkey, base, wallet, tee]);
 
   useEffect(() => {
     load();
     base
-      .getBalance(payer.publicKey)
+      .getBalance(wallet.publicKey)
       .then((l) => setBalance(l / LAMPORTS_PER_SOL))
       .catch(() => {});
     const id = setInterval(load, 4000);
@@ -193,15 +194,15 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
       clearInterval(id);
       clearInterval(tick);
     };
-  }, [load, base, payer]);
+  }, [load, base, wallet]);
 
   const status = arena ? statusOf(arena) : "open";
   const nonce = arena ? nonceOf(arena) : "";
-  const myIndex = arena ? arena.seats.slice(0, arena.playerCount).findIndex((s) => s.player.equals(payer.publicKey)) : -1;
+  const myIndex = arena ? arena.seats.slice(0, arena.playerCount).findIndex((s) => s.player.equals(wallet.publicKey)) : -1;
   const mySeat = myIndex >= 0 ? arena!.seats[myIndex] : null;
   const endAt = arena ? Number(arena.endAt) : 0;
   const remaining = endAt > 0 ? endAt - now : 0;
-  const isCreator = arena ? arena.creator.equals(payer.publicKey) : false;
+  const isCreator = arena ? arena.creator.equals(wallet.publicKey) : false;
   const biteCooldown = arena ? Math.max(15, Math.floor(Number(arena.duration) / 8)) : 0;
   const nextBiteIn = arena
     ? Math.max(0, Number((arena as any).lastShockTs ?? 0) + biteCooldown - now)
@@ -243,75 +244,75 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
   const seal = () =>
     run("seal", async () => {
       if (!tee) throw new Error("TEE session not ready");
-      const program = programAt(tee.conn, payer.publicKey);
-      const accs = permissionAccounts(arenaPubkey, payer.publicKey);
+      const program = programAt(tee.conn, wallet.publicKey);
+      const accs = permissionAccounts(arenaPubkey, wallet.publicKey);
       const initTx = await program.methods.initPermission(nonce).accounts(accs).transaction();
-      await sendTx(tee.conn, initTx, payer, [], { skipPreflight: true });
+      await sendTx(tee.conn, initTx, wallet, { skipPreflight: true });
       const sealTx = await program.methods.setPrivacy(nonce, true).accounts(accs).transaction();
-      return sendTx(tee.conn, sealTx, payer, [], { skipPreflight: true });
+      return sendTx(tee.conn, sealTx, wallet, { skipPreflight: true });
     });
 
   const shock = () =>
     run("shock", async () => {
       const er = erConn();
-      const program = programAt(er, payer.publicKey);
+      const program = programAt(er, wallet.publicKey);
       const tx = await program.methods
         .requestShock(nonce)
-        .accounts({ payer: payer.publicKey, arena: arenaPubkey, oracleQueue: EPHEMERAL_QUEUE })
+        .accounts({ payer: wallet.publicKey, arena: arenaPubkey, oracleQueue: EPHEMERAL_QUEUE })
         .transaction();
-      return sendTx(er, tx, payer, [], { skipPreflight: true });
+      return sendTx(er, tx, wallet, { skipPreflight: true });
     });
 
   const record = () =>
     run("record", async () => {
-      const program = programAt(base, payer.publicKey);
+      const program = programAt(base, wallet.publicKey);
       const tx = await program.methods
         .recordRound(nonce, arena!.series)
         .accounts({ arena: arenaPubkey, series: arena!.series })
         .transaction();
-      return sendTx(base, tx, payer);
+      return sendTx(base, tx, wallet);
     });
 
   const reveal = () =>
     run("reveal", async () => {
       if (!tee) throw new Error("TEE session not ready");
-      const program = programAt(tee.conn, payer.publicKey);
-      const accs = permissionAccounts(arenaPubkey, payer.publicKey);
+      const program = programAt(tee.conn, wallet.publicKey);
+      const accs = permissionAccounts(arenaPubkey, wallet.publicKey);
       const tx = await program.methods.setPrivacy(nonce, false).accounts(accs).transaction();
-      return sendTx(tee.conn, tx, payer, [], { skipPreflight: true });
+      return sendTx(tee.conn, tx, wallet, { skipPreflight: true });
     });
 
   /* ------------------------------- actions ------------------------------- */
 
   const join = () =>
     run("join", async () => {
-      const program = programAt(base, payer.publicKey);
+      const program = programAt(base, wallet.publicKey);
       const tx = await program.methods
         .joinArena(nonce)
-        .accounts({ player: payer.publicKey, arena: arenaPubkey, vault: vaultOf(arenaPubkey), systemProgram: SystemProgram.programId })
+        .accounts({ player: wallet.publicKey, arena: arenaPubkey, vault: vaultOf(arenaPubkey), systemProgram: SystemProgram.programId })
         .transaction();
-      return sendTx(base, tx, payer);
+      return sendTx(base, tx, wallet);
     });
 
   const lock = () =>
     run("lock", async () => {
-      const program = programAt(base, payer.publicKey);
+      const program = programAt(base, wallet.publicKey);
       const tx = await program.methods
         .lockArena(nonce)
-        .accounts({ creator: payer.publicKey, arena: arenaPubkey })
+        .accounts({ creator: wallet.publicKey, arena: arenaPubkey })
         .transaction();
-      return sendTx(base, tx, payer);
+      return sendTx(base, tx, wallet);
     });
 
   const delegate = () =>
     run("delegate", async () => {
-      const program = programAt(base, payer.publicKey);
+      const program = programAt(base, wallet.publicKey);
       const tx = await program.methods
         .delegateArena(nonce)
-        .accounts({ payer: payer.publicKey, arena: arenaPubkey })
+        .accounts({ payer: wallet.publicKey, arena: arenaPubkey })
         .remainingAccounts([{ pubkey: TEE_VALIDATOR, isSigner: false, isWritable: false }])
         .transaction();
-      const sig = await sendTx(base, tx, payer);
+      const sig = await sendTx(base, tx, wallet);
       await waitFor(async () => {
         const info = await base.getAccountInfo(arenaPubkey);
         return info && info.owner.equals(DELEGATION_PROGRAM_ID) ? true : null;
@@ -322,39 +323,39 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
   const trade = (kind: "open" | "close") =>
     run(kind === "open" ? "open" : "close", async () => {
       const er = erConn();
-      const program = programAt(er, payer.publicKey);
+      const program = programAt(er, wallet.publicKey);
       const builder =
         kind === "open"
           ? program.methods
               .openPosition(nonce, side, leverage)
-              .accounts({ trader: payer.publicKey, arena: arenaPubkey, feed: arena!.feed })
+              .accounts({ trader: wallet.publicKey, arena: arenaPubkey, feed: arena!.feed })
           : program.methods
               .closePosition(nonce)
-              .accounts({ trader: payer.publicKey, arena: arenaPubkey, feed: arena!.feed });
+              .accounts({ trader: wallet.publicKey, arena: arenaPubkey, feed: arena!.feed });
       const tx = await builder.transaction();
-      return sendTx(er, tx, payer, [], { skipPreflight: true });
+      return sendTx(er, tx, wallet, { skipPreflight: true });
     });
 
   const endRound = () =>
     run("end_round", async () => {
       const er = erConn();
-      const program = programAt(er, payer.publicKey);
+      const program = programAt(er, wallet.publicKey);
       const tx = await program.methods
         .endRound(nonce)
-        .accounts({ trader: payer.publicKey, arena: arenaPubkey, feed: arena!.feed })
+        .accounts({ trader: wallet.publicKey, arena: arenaPubkey, feed: arena!.feed })
         .transaction();
-      return sendTx(er, tx, payer, [], { skipPreflight: true });
+      return sendTx(er, tx, wallet, { skipPreflight: true });
     });
 
   const commit = () =>
     run("commit", async () => {
       const er = erConn();
-      const program = programAt(er, payer.publicKey);
+      const program = programAt(er, wallet.publicKey);
       const tx = await program.methods
         .commitRound(nonce)
-        .accounts({ payer: payer.publicKey, arena: arenaPubkey })
+        .accounts({ payer: wallet.publicKey, arena: arenaPubkey })
         .transaction();
-      const sig = await sendTx(er, tx, payer, [], { skipPreflight: true });
+      const sig = await sendTx(er, tx, wallet, { skipPreflight: true });
       await waitFor(async () => {
         const info = await base.getAccountInfo(arenaPubkey);
         return info && !info.owner.equals(DELEGATION_PROGRAM_ID) ? true : null;
@@ -364,11 +365,11 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
 
   const settle = () =>
     run("settle", async () => {
-      const program = programAt(base, payer.publicKey);
+      const program = programAt(base, wallet.publicKey);
       const podium = arena!.results
         .slice(0, arena!.winnerCount)
         .map((r) => ({ pubkey: r.player, isSigner: false, isWritable: true }));
-      // El bono last-one-standing viaja DESPUÉS del podio: el programa lo lee en
+      // The last-one-standing bonus travels AFTER the podium: the program reads it from
       // `remaining_accounts[winners]`.
       const lst =
         arena!.lstWinner && !arena!.lstWinner.equals(PublicKey.default)
@@ -384,7 +385,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
         })
         .remainingAccounts([...podium, ...lst])
         .transaction();
-      return sendTx(base, tx, payer);
+      return sendTx(base, tx, wallet);
     });
 
   /* -------------------------------- render ------------------------------- */
@@ -407,7 +408,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
   const potSol = sol(arena.pot);
   const seatList = arena.seats.slice(0, arena.playerCount);
   // After the reveal the table must read as a ranking; during the round the order is irrelevant.
-  // Después del settle `realized` se vacía, así que la única fuente de verdad es `results`.
+  // After settle `realized` is zeroed, so the only source of truth is `results`.
   const settledEquity = new Map<string, number>();
   if (revealed) {
     for (const r of arena.results.slice(0, arena.playerCount)) {
@@ -419,7 +420,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
     const final = settledEquity.get(key);
     if (final !== undefined) return final;
     let eq = (Number(s.bankroll) + Number(s.realized)) / FIXED;
-    // En vivo, mi asiento se marca a mercado: si no, mi PnL no se mueve hasta cerrar.
+    // Live, my seat is marked to market: otherwise my PnL would not move until close.
     if (marked && s.side !== 0 && price && Number(s.entryPrice) > 0) {
       const entry = Number(s.entryPrice);
       const pnl = (Number(s.notional) * (price - entry)) / entry;
@@ -550,7 +551,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
         <div className="lst">
           <span className="lst-badge">last one standing</span>
           <span className="lst-who">
-            {arena.lstWinner.equals(payer.publicKey) ? "you" : handleOf(arena.lstWinner.toBase58())}
+            {arena.lstWinner.equals(wallet.publicKey) ? "you" : handleOf(arena.lstWinner.toBase58())}
           </span>
           <span className="lst-sub">
             held into the bell · +{sol(arena.lstBonus).toFixed(4)} SOL off the top
@@ -560,9 +561,9 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
 
       {iAmMad && (
         <div className="mad-banner">
-          <span className="mad-badge">fiebre</span>
-          <span className="mad-line">“{madLine(payer.publicKey.toBase58(), Math.floor(madLeft / 20))}”</span>
-          <span className="mad-sub">{madLeft}s · tus órdenes salen invertidas</span>
+          <span className="mad-badge">fever</span>
+          <span className="mad-line">“{madLine(wallet.publicKey.toBase58(), Math.floor(madLeft / 20))}”</span>
+          <span className="mad-sub">{madLeft}s · your orders execute inverted</span>
         </div>
       )}
 
@@ -601,12 +602,12 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
           <div className="panel-body">
             {seats.length === 0 && <div className="row">nobody yet — be the first</div>}
             {seats.map((seat, i) => {
-              const mine = seat.player.equals(payer.publicKey);
+              const mine = seat.player.equals(wallet.publicKey);
               const inResults = settledEquity.has(seat.player.toBase58());
               const eq = equityOf(seat, mine && !revealed);
               const delta = eq - 1000;
-              // Con la ronda cerrada, quien no está en el podio no tiene equity final guardado:
-              // mostrar "±0.00" sería inventar.
+              // With the round closed, anyone off the podium has no final equity stored:
+              // showing "±0.00" would be inventing it.
               const showPnl = revealed ? inResults : mine;
               const key = seat.player.toBase58();
               return (
@@ -736,7 +737,7 @@ export default function ArenaView({ arenaPubkey, payer, onBack }: Props) {
                 {arena.results.slice(0, arena.winnerCount).map((r, i) => (
                   <div className="row" key={r.player.toBase58()} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
                     <span className="rank mono">#{i + 1}</span>
-                    <span className="who mono">{r.player.equals(payer.publicKey) ? "you" : shortKey(r.player)}</span>
+                    <span className="who mono">{r.player.equals(wallet.publicKey) ? "you" : shortKey(r.player)}</span>
                     <span className="pnl up">{(Number(r.equity) / FIXED).toFixed(4)}</span>
                   </div>
                 ))}

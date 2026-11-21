@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import * as anchor from "@anchor-lang/core";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
+import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import Link from "next/link";
 import ArenaView from "@/components/ArenaView";
 import { handleOf } from "@/components/Bits";
@@ -24,8 +23,16 @@ import {
   sol,
   statusOf,
 } from "@/lib/pit";
+import {
+  type DetectedWallet,
+  type Wallet,
+  connectWallet,
+  detectWallets,
+  installUrl,
+  reconnectWallet,
+  requestAirdrop,
+} from "@/lib/wallet";
 
-const STORAGE_KEY = "pit:secret";
 const ARENAS_KEY = "pit:arenas";
 
 function rememberArena(pubkey: string) {
@@ -49,23 +56,11 @@ function knownArenas(): string[] {
   }
 }
 
-function loadOrCreateWallet(): Keypair | null {
-  if (typeof window === "undefined") return null;
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    try {
-      return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(stored)));
-    } catch {
-      /* fall through and regenerate */
-    }
-  }
-  const kp = Keypair.generate();
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(kp.secretKey)));
-  return kp;
-}
-
 export default function Home() {
-  const [payer, setPayer] = useState<Keypair | null>(null);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [wallets, setWallets] = useState<DetectedWallet[]>([]);
+  const [picking, setPicking] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [arenas, setArenas] = useState<Arena[]>([]);
   const [selected, setSelected] = useState<PublicKey | null>(null);
   const [balance, setBalance] = useState(0);
@@ -84,8 +79,14 @@ export default function Home() {
   const base = useMemo(() => baseConnection(), []);
 
   useEffect(() => {
-    setPayer(loadOrCreateWallet());
     setKnown(knownArenas());
+    setWallets(detectWallets());
+    // Extensions inject after hydration, so re-scan once the page is idle.
+    const t = window.setTimeout(() => setWallets(detectWallets()), 900);
+    reconnectWallet().then((w) => {
+      if (w) setWallet(w);
+    });
+    return () => window.clearTimeout(t);
   }, []);
 
   const refreshSeries = useCallback(async () => {
@@ -99,14 +100,13 @@ export default function Home() {
     try {
       const list = await listArenas(base);
       setArenas(list);
-      if (payer) setBalance((await base.getBalance(payer.publicKey)) / LAMPORTS_PER_SOL);
+      if (wallet) setBalance((await base.getBalance(wallet.publicKey)) / LAMPORTS_PER_SOL);
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
-  }, [base, payer]);
+  }, [base, wallet]);
 
   useEffect(() => {
-    if (!payer) return;
     refresh();
     refreshSeries();
     const id = setInterval(() => {
@@ -114,16 +114,65 @@ export default function Home() {
       refreshSeries();
     }, 6000);
     return () => clearInterval(id);
-  }, [payer, refresh, refreshSeries]);
+  }, [refresh, refreshSeries]);
+
+  const connect = async (id: string) => {
+    setConnecting(true);
+    setError(null);
+    try {
+      const w = await connectWallet(id);
+      setWallet(w);
+      setPicking(false);
+      setNotice(`${w.label} connected`);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  const disconnect = async () => {
+    await wallet?.disconnect();
+    setWallet(null);
+    setBalance(0);
+    setNotice(null);
+  };
+
+  const airdrop = async () => {
+    if (!wallet) return;
+    setBusy("airdrop");
+    setError(null);
+    try {
+      await requestAirdrop(wallet.publicKey, 1);
+      setNotice("1 SOL requested from the devnet faucet");
+      setBalance((await base.getBalance(wallet.publicKey)) / LAMPORTS_PER_SOL);
+    } catch (e: any) {
+      setError(`${e?.message ?? String(e)} — you can also use https://faucet.solana.com`);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const openArena = (key: PublicKey) => {
+    if (!wallet) {
+      setError("Connect a wallet to enter an arena");
+      setPicking(true);
+      return;
+    }
+    setSelected(key);
+  };
 
   const createArena = async () => {
-    if (!payer) return;
+    if (!wallet) {
+      setPicking(true);
+      return;
+    }
     setBusy("create");
     setError(null);
     setNotice(null);
     try {
       const nonce = `s1-${Date.now().toString(36)}`;
-      const program = programAt(base, payer.publicKey);
+      const program = programAt(base, wallet.publicKey);
       const { builder, arena } = buildCreateArena(program, {
         nonce,
         entryFeeSol: entryFee,
@@ -131,7 +180,7 @@ export default function Home() {
         maxPlayers,
         rakeBps: 0,
         feed: FEEDS.SOL.address,
-        creator: payer.publicKey,
+        creator: wallet.publicKey,
       });
       let seriesKey: PublicKey | null = null;
       if (seriesMode) {
@@ -139,22 +188,22 @@ export default function Home() {
         const [sk] = seriesPda(seriesNonce);
         const sTx = await program.methods
           .createSeries(seriesNonce, 3)
-          .accounts({ creator: payer.publicKey, series: sk, systemProgram: SystemProgram.programId })
+          .accounts({ creator: wallet.publicKey, series: sk, systemProgram: SystemProgram.programId })
           .transaction();
-        await sendTx(base, sTx, payer);
+        await sendTx(base, sTx, wallet);
         seriesKey = sk;
         rememberSeries(sk.toBase58());
       }
 
       const tx = await builder.transaction();
-      const sig = await sendTx(base, tx, payer);
+      const sig = await sendTx(base, tx, wallet);
 
       if (seriesKey) {
         const bTx = await program.methods
           .bindSeries(nonce, seriesKey)
           .accounts({ arena, series: seriesKey })
           .transaction();
-        await sendTx(base, bTx, payer);
+        await sendTx(base, bTx, wallet);
       }
 
       setNotice(`arena ${arena.toBase58()} · ${sig}`);
@@ -170,8 +219,8 @@ export default function Home() {
     }
   };
 
-  if (selected && payer) {
-    return <ArenaView arenaPubkey={selected} payer={payer} onBack={() => setSelected(null)} />;
+  if (selected && wallet) {
+    return <ArenaView arenaPubkey={selected} wallet={wallet} onBack={() => setSelected(null)} />;
   }
 
   return (
@@ -185,21 +234,31 @@ export default function Home() {
             <div className="brand-sub">private instant trading · solana devnet</div>
           </div>
         </Link>
-        <div className="wallet-box">
-          <span className="pill mono">{balance.toFixed(3)} SOL</span>
-          <span className="pill mono">{payer ? shortKey(payer.publicKey) : "…"}</span>
-          <button
-            className="copy"
-            onClick={() => {
-              if (!payer) return;
-              navigator.clipboard?.writeText(payer.publicKey.toBase58());
-              setCopied(true);
-              setTimeout(() => setCopied(false), 1500);
-            }}
-          >
-            {copied ? "copied" : "copy address"}
-          </button>
-        </div>
+        {wallet ? (
+          <div className="wallet-box">
+            <span className="pill mono">{balance.toFixed(3)} SOL</span>
+            <span className="pill mono">{shortKey(wallet.publicKey)}</span>
+            <button
+              className="copy"
+              onClick={() => {
+                navigator.clipboard?.writeText(wallet.publicKey.toBase58());
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+            >
+              {copied ? "copied" : "copy address"}
+            </button>
+            <button className="copy" onClick={disconnect}>
+              disconnect
+            </button>
+          </div>
+        ) : (
+          <div className="wallet-box">
+            <button className="btn" onClick={() => setPicking(true)}>
+              Connect wallet
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="hero">
@@ -216,6 +275,63 @@ export default function Home() {
         </p>
       </div>
 
+      {picking && !wallet && (
+        <div className="panel" style={{ marginTop: 4 }}>
+          <div className="panel-head">
+            <span>Connect a wallet</span>
+            <span>devnet</span>
+          </div>
+          <div style={{ padding: 16, display: "grid", gap: 10 }}>
+            {wallets.length === 0 && (
+              <p className="hint" style={{ margin: 0 }}>
+                No Solana wallet detected in this browser. Install one and reload:
+              </p>
+            )}
+            {wallets.map((w) => (
+              <button
+                key={w.id}
+                className="btn"
+                disabled={connecting}
+                onClick={() => connect(w.id)}
+              >
+                {connecting ? "connecting…" : `Connect ${w.label}`}
+              </button>
+            ))}
+            {["phantom", "solflare", "backpack"].map((id) => (
+              <a
+                key={id}
+                className="btn ghost"
+                style={{ display: "block", textAlign: "center", padding: 14 }}
+                href={installUrl(id)}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Get {id.charAt(0).toUpperCase() + id.slice(1)}
+              </a>
+            ))}
+            <p className="hint" style={{ margin: 0 }}>
+              Your keys never leave the extension: the app only asks it to sign transactions and the
+              enclave challenge. You need devnet SOL to pay the entry fee — there is an airdrop
+              button under the wallet once connected.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {wallet && balance < 0.05 && (
+        <div className="panel" style={{ marginTop: 4 }}>
+          <div className="panel-head">
+            <span>Low devnet balance</span>
+            <span>{balance.toFixed(3)} SOL</span>
+          </div>
+          <div style={{ padding: 16 }}>
+            <button className="btn ghost" disabled={busy !== null} onClick={airdrop}>
+              {busy === "airdrop" ? "requesting…" : "Request 1 devnet SOL"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && <div className="err">{error}</div>}
       {notice && <div className="ok">{notice}</div>}
 
@@ -228,7 +344,7 @@ export default function Home() {
         {arenas.map((a) => {
           const st = statusOf(a);
           return (
-            <div className="card" key={a.publicKey.toBase58()} onClick={() => setSelected(a.publicKey)}>
+            <div className="card" key={a.publicKey.toBase58()} onClick={() => openArena(a.publicKey)}>
               <div className="card-top">
                 <span className={`tag ${st}`}>{st}</span>
                 <span className="mono" style={{ fontSize: 11, color: "var(--dim)" }}>
@@ -263,7 +379,7 @@ export default function Home() {
               className="row"
               key={k}
               style={{ cursor: "pointer" }}
-              onClick={() => setSelected(new PublicKey(k))}
+              onClick={() => openArena(new PublicKey(k))}
             >
               <span className="who mono" style={{ fontSize: 12 }}>
                 {k}
@@ -348,7 +464,7 @@ export default function Home() {
             <input
               type="number"
               min="2"
-              max="16"
+              max="8"
               value={maxPlayers}
               onChange={(e) => setMaxPlayers(Number(e.target.value))}
               style={inputStyle}
@@ -377,8 +493,9 @@ export default function Home() {
       </div>
 
       <div className="foot-note">
-        Wallet: a local keypair is generated in your browser and kept in localStorage — no Phantom
-        connection yet. To play you need devnet SOL at that address (copy address). Program:{" "}
+        {wallet
+          ? `Connected with ${wallet.label} on devnet. Every action — join, trade, settle — is a transaction signed by your wallet. Program: `
+          : "Connect a Solana wallet to play. Nothing is custodial: the app never sees your keys. Program: "}
         <span className="mono">4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar</span>.
       </div>
     </div>

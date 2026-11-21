@@ -123,13 +123,16 @@ Feeds devnet (PDA `["price_feed","pyth-lazer",<id>]` del programa `PriCems…`):
 /play   la app: lobby, series y arenas
 ```
 
-`web/` — Next.js 15 + React 19, sin dependencias de wallet externas: la llave se
-genera en el navegador y vive en `localStorage`, así el jurado entra y juega sin
-instalar nada. La landing es un server component (cero JS de cliente) y explica las
-cuatro piezas del stack con lo que está verificado, no con adjetivos; la app vive en
-`/play` para que el link de submission muestre el producto antes que un formulario.
+`web/` — Next.js 15 + React 19. Se conecta directo a las wallets inyectadas
+(Phantom, Solflare, Backpack) sin `wallet-adapter`: el jugador firma con su propia
+llave, que nunca sale de la extensión. Al conectar, la UI ofrece un airdrop de devnet
+para pagar la entrada.
 
 Qué hace:
+
+- **Wallet**: conecta la extensión del jugador (Phantom, Solflare, Backpack) y firma
+  cada transacción con ella; reconecta solo al recargar (`onlyIfTrusted`). La llave
+  nunca pasa por la app. Incluye botón de airdrop para devnet.
 
 - **Lobby**: lista todas las arenas, incluidas las que están delegadas. Una cuenta
   delegada desaparece del `getProgramAccounts` de la capa base (su owner pasa a ser
