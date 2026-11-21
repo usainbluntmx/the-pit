@@ -6,6 +6,8 @@ y al cerrar la ronda el podio se lleva el pozo del escrow.
 
 **"Everyone sees the leaderboard. Nobody sees your book."**
 
+![PIT — landing](docs/screens/16-landing.png)
+
 Edición: **Solana Blitz v10 — Entertainment Finance** (20–27 nov 2026).
 Estado: **devnet, 21 nov 2026** — programa desplegado, ciclo completo y las tres
 piezas del stack (ER, Private ER, VRF) verificadas con firmas reales.
