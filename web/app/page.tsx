@@ -1,0 +1,272 @@
+import Link from "next/link";
+
+const PROGRAM = "4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar";
+
+export default function Landing() {
+  return (
+    <div className="shell landing">
+      <div className="grid-bg" />
+
+      <header className="land-nav">
+        <div className="brand">
+          <div className="brand-mark">P</div>
+          <div>
+            <div className="brand-name">THE PIT</div>
+            <div className="brand-sub">private instant trading · solana devnet</div>
+          </div>
+        </div>
+        <div className="land-nav-links">
+          <a href="#how">how it works</a>
+          <a href="#bite">the bite</a>
+          <a href="#stack">stack</a>
+          <Link className="btn" href="/play">
+            Play on devnet
+          </Link>
+        </div>
+      </header>
+
+      <section className="land-hero">
+        <div className="kicker">Entertainment finance · Blitz v10</div>
+        <h1>
+          The market
+          <br />
+          <em>bites back.</em>
+        </h1>
+        <p className="lede">
+          Trading competitions on Solana where everyone starts with the same bankroll and a shared
+          clock. Trades settle in a MagicBlock rollup — gasless, 10ms — the book stays sealed inside
+          an enclave until the bell, and every few seconds the pit force-closes one random player who
+          is holding risk. Top three split the escrow.
+        </p>
+        <div className="land-cta">
+          <Link className="btn" href="/play">
+            Enter an arena
+          </Link>
+          <a className="btn ghost" href="#how">
+            See the loop
+          </a>
+        </div>
+
+        <div className="hero-stats">
+          <div>
+            <b>10ms</b>
+            <span>trade latency on the rollup</span>
+          </div>
+          <div>
+            <b>0 fees</b>
+            <span>no gas while the round runs</span>
+          </div>
+          <div>
+            <b>sealed</b>
+            <span>positions hidden by the enclave</span>
+          </div>
+          <div>
+            <b>VRF</b>
+            <span>the bite is verifiably random</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="how" className="land-section">
+        <div className="land-head">
+          <span className="land-kicker">the loop</span>
+          <h2>One bankroll. One market. One winner.</h2>
+        </div>
+        <div className="land-steps">
+          {[
+            {
+              n: "01",
+              t: "Take a seat",
+              d: "Everyone pays the same entry into an escrow vault and starts with 1,000 credits. No deposits, no real leverage.",
+            },
+            {
+              n: "02",
+              t: "The bell rings",
+              d: "The arena is delegated to a MagicBlock rollup. From there every order is free and lands in ~10ms against the live price feed.",
+            },
+            {
+              n: "03",
+              t: "The pit bites",
+              d: "Every few seconds the oracle picks one player who is holding a position and force-closes them at market. Nobody sees it coming.",
+            },
+            {
+              n: "04",
+              t: "The podium",
+              d: "At the bell the round is committed to Solana, positions are revealed and the escrow pays 60/25/15 to the top three.",
+            },
+          ].map((s) => (
+            <article className="land-step" key={s.n}>
+              <span className="mono">{s.n}</span>
+              <h3>{s.t}</h3>
+              <p>{s.d}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="bite" className="land-section land-bite">
+        <div className="land-head">
+          <span className="land-kicker">the mechanic nobody else has</span>
+          <h2>Pressure makes agents lose control.</h2>
+          <p className="land-sub">
+            Being bitten, closing at a loss and holding too long build <b>pressure</b>. At 100 the
+            seat enters <b>fever</b> for 20 seconds: its orders execute inverted. Ask for long, get
+            short. It is not cosmetic — the program flips the side on-chain.
+          </p>
+        </div>
+
+        <div className="land-bite-grid">
+          <div className="land-panel">
+            <div className="land-gauge">
+              <span>pressure</span>
+              <span className="land-gauge-track">
+                <span className="land-gauge-fill" />
+              </span>
+              <span className="mono">MAD</span>
+            </div>
+            <div className="land-fever">
+              <span className="mad-badge">fiebre</span>
+              <span className="mad-line">“▞▚▞ NO EXISTE EL ROJO ▞▚▞”</span>
+              <span className="mad-sub">15s · orders inverted</span>
+            </div>
+            <p className="hint" style={{ marginTop: 14 }}>
+              The delirium line is generated by the game from a seed, not by a model — same fever,
+              same text.
+            </p>
+          </div>
+
+          <ul className="land-rules">
+            <li>
+              <b>+40</b> the pit takes you out of a position
+            </li>
+            <li>
+              <b>+25</b> you close a trade down more than 20 credits
+            </li>
+            <li>
+              <b>−30</b> you close in the green
+            </li>
+            <li>
+              <b>100</b> fever: 20 seconds, inverted orders, then back to sane
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="stack" className="land-section">
+        <div className="land-head">
+          <span className="land-kicker">under the hood</span>
+          <h2>Four pieces of MagicBlock, each doing real work.</h2>
+        </div>
+        <div className="land-stack">
+          {[
+            {
+              k: "Ephemeral Rollup",
+              d: "Orders execute off the base layer at ~10ms and cost nothing. The arena is delegated for the round and committed back at the bell.",
+              tag: "10ms · gasless",
+            },
+            {
+              k: "Private ER (TEE)",
+              d: "The book is sealed inside the enclave. A wallet outside the permission gets null for the arena — token or not. Verified on devnet.",
+              tag: "permission enforced",
+            },
+            {
+              k: "VRF oracle",
+              d: "The bite picks its victim with verifiable randomness. The callback is identity-checked, so a forged callback is rejected on-chain.",
+              tag: "verifiable",
+            },
+            {
+              k: "Price feed",
+              d: "Positions are marked against the MagicBlock oracle, read inside the rollup. On base the same feed is stale — that is the point.",
+              tag: "on-chain prices",
+            },
+          ].map((c) => (
+            <article className="land-card" key={c.k}>
+              <div className="land-card-top">
+                <h3>{c.k}</h3>
+                <span className="pill">{c.tag}</span>
+              </div>
+              <p>{c.d}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="land-section land-series">
+        <div className="land-head">
+          <span className="land-kicker">beyond one round</span>
+          <h2>Series: three rounds, points on-chain.</h2>
+        </div>
+        <div className="land-series-grid">
+          <div className="land-panel">
+            <div className="series-head" style={{ padding: 0, marginBottom: 10 }}>
+              <span className="mono">season-01</span>
+              <span className="pill">3/3 rounds</span>
+            </div>
+            {[
+              ["BULL-BLUE·EK", "23 pts", "3 podiums"],
+              ["BULL-BLUE·1I", "18 pts", "3 podiums"],
+              ["MANTIS-BLUE·IY", "18 pts", "3 podiums"],
+            ].map(([n, p, s], i) => (
+              <div className="row" key={n}>
+                <span className="rank mono">{String(i + 1).padStart(2, "0")}</span>
+                <span className="who">
+                  <span className="who-line">{n}</span>
+                  <small>{s}</small>
+                </span>
+                <span className="pnl up">{p}</span>
+              </div>
+            ))}
+          </div>
+          <div>
+            <p className="land-sub" style={{ marginTop: 0 }}>
+              Points are written by the program, not by a server: podium 10/6/3, plus one per bite
+              survived while holding, plus two for being the last one standing.
+            </p>
+            <ul className="land-rules">
+              <li>
+                <b>10 / 6 / 3</b> podium
+              </li>
+              <li>
+                <b>+1</b> per bite survived
+              </li>
+              <li>
+                <b>+2</b> last one standing at the bell
+              </li>
+              <li>
+                <b>10%</b> of the pot goes to whoever holds into the bell alone
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="land-final">
+        <h2>Same bankroll. Real prices. Your nerves.</h2>
+        <p>
+          Runs on Solana devnet. Wallet generated in the browser, no extension needed. Bring a friend
+          — an arena needs two seats to start.
+        </p>
+        <div className="land-cta">
+          <Link className="btn" href="/play">
+            Play on devnet
+          </Link>
+          <a
+            className="btn ghost"
+            href={`https://explorer.solana.com/address/${PROGRAM}?cluster=devnet`}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Read the program
+          </a>
+        </div>
+      </section>
+
+      <footer className="land-foot">
+        <span>
+          program <span className="mono">{PROGRAM}</span>
+        </span>
+        <span>built for Solana Blitz v10 · entertainment finance</span>
+      </footer>
+    </div>
+  );
+}

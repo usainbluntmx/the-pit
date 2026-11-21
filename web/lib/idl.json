@@ -1,0 +1,2450 @@
+{
+  "address": "4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar",
+  "metadata": {
+    "name": "the_pit",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "PIT — Private Instant Trading: competitive trading arenas on MagicBlock"
+  },
+  "instructions": [
+    {
+      "name": "bind_series",
+      "docs": [
+        "BASE. Bind an open arena to a series. Permissionless: binding moves no funds and",
+        "both accounts already record their creator, so the only rule is that they match.",
+        "The round number follows the series calendar."
+      ],
+      "discriminator": [
+        166,
+        184,
+        84,
+        224,
+        132,
+        159,
+        183,
+        49
+      ],
+      "accounts": [
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "series"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        },
+        {
+          "name": "series_key",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "close_permission",
+      "docs": [
+        "ER. Close the permission and return its rent to the arena PDA."
+      ],
+      "discriminator": [
+        17,
+        241,
+        212,
+        43,
+        238,
+        201,
+        203,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "permission",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  114,
+                  109,
+                  105,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110,
+                  58
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                136,
+                161,
+                10,
+                196,
+                33,
+                152,
+                1,
+                214,
+                246,
+                106,
+                29,
+                60,
+                6,
+                152,
+                192,
+                102,
+                169,
+                175,
+                212,
+                217,
+                180,
+                252,
+                231,
+                71,
+                151,
+                141,
+                209,
+                5,
+                168,
+                212,
+                103,
+                82
+              ]
+            }
+          }
+        },
+        {
+          "name": "permission_program",
+          "address": "ACLseoPoyC3cBqoUtkbjZ4aDrkurZW86v19pXz2XQnp1"
+        },
+        {
+          "name": "ephemeral_vault",
+          "writable": true,
+          "address": "MagicVau1t999999999999999999999999999999999"
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "close_position",
+      "docs": [
+        "ER. Close the open position and realise the PnL, capped at the bankroll."
+      ],
+      "discriminator": [
+        123,
+        134,
+        81,
+        0,
+        49,
+        68,
+        98,
+        98
+      ],
+      "accounts": [
+        {
+          "name": "trader",
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "feed"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "commit_round",
+      "docs": [
+        "ER. Commit the final arena state and hand ownership back to the base layer."
+      ],
+      "discriminator": [
+        229,
+        102,
+        157,
+        34,
+        152,
+        217,
+        15,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magic_context",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "create_arena",
+      "docs": [
+        "Create an arena on the base layer. The escrow vault is a system-owned PDA",
+        "seeded by the arena key, funded here so it stays rent exempt."
+      ],
+      "discriminator": [
+        174,
+        236,
+        45,
+        61,
+        197,
+        215,
+        149,
+        169
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "string"
+        },
+        {
+          "name": "entry_fee",
+          "type": "u64"
+        },
+        {
+          "name": "duration_secs",
+          "type": "i64"
+        },
+        {
+          "name": "max_players",
+          "type": "u8"
+        },
+        {
+          "name": "rake_bps",
+          "type": "u16"
+        },
+        {
+          "name": "feed",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "create_series",
+      "docs": [
+        "BASE. Open a series: rounds that keep a cumulative score on-chain."
+      ],
+      "discriminator": [
+        181,
+        9,
+        52,
+        120,
+        197,
+        221,
+        42,
+        142
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "series",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  101,
+                  114,
+                  105,
+                  101,
+                  115
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "string"
+        },
+        {
+          "name": "max_rounds",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "delegate_arena",
+      "docs": [
+        "BASE LAYER. Delegate the arena to the ER so it can be traded on."
+      ],
+      "discriminator": [
+        216,
+        55,
+        214,
+        212,
+        195,
+        162,
+        39,
+        100
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "buffer_arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                55,
+                52,
+                138,
+                116,
+                36,
+                147,
+                108,
+                82,
+                14,
+                224,
+                225,
+                75,
+                173,
+                128,
+                96,
+                57,
+                99,
+                124,
+                228,
+                35,
+                94,
+                45,
+                153,
+                190,
+                9,
+                89,
+                117,
+                181,
+                221,
+                248,
+                236,
+                3
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegation_record_arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "delegation_metadata_arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegation_program"
+            }
+          }
+        },
+        {
+          "name": "arena",
+          "writable": true
+        },
+        {
+          "name": "owner_program",
+          "address": "4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar"
+        },
+        {
+          "name": "delegation_program",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "end_round",
+      "docs": [
+        "ER. Freeze the round and rank the seats by equity at the final price."
+      ],
+      "discriminator": [
+        54,
+        47,
+        1,
+        200,
+        250,
+        6,
+        144,
+        63
+      ],
+      "accounts": [
+        {
+          "name": "trader",
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "feed"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "init_permission",
+      "docs": [
+        "ER. Create the ephemeral permission for the arena. Paid by the arena PDA itself",
+        "(it signs with its own seeds), idempotent, and starts public — privacy is opt-in",
+        "through `set_privacy`."
+      ],
+      "discriminator": [
+        66,
+        14,
+        153,
+        250,
+        187,
+        36,
+        179,
+        236
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "permission",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  114,
+                  109,
+                  105,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110,
+                  58
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                136,
+                161,
+                10,
+                196,
+                33,
+                152,
+                1,
+                214,
+                246,
+                106,
+                29,
+                60,
+                6,
+                152,
+                192,
+                102,
+                169,
+                175,
+                212,
+                217,
+                180,
+                252,
+                231,
+                71,
+                151,
+                141,
+                209,
+                5,
+                168,
+                212,
+                103,
+                82
+              ]
+            }
+          }
+        },
+        {
+          "name": "permission_program",
+          "address": "ACLseoPoyC3cBqoUtkbjZ4aDrkurZW86v19pXz2XQnp1"
+        },
+        {
+          "name": "ephemeral_vault",
+          "writable": true,
+          "address": "MagicVau1t999999999999999999999999999999999"
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "join_arena",
+      "docs": [
+        "Take a seat. The entry fee goes to the vault on the base layer."
+      ],
+      "discriminator": [
+        135,
+        217,
+        203,
+        200,
+        93,
+        181,
+        131,
+        47
+      ],
+      "accounts": [
+        {
+          "name": "player",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "lock_arena",
+      "docs": [
+        "Close registration and start the clock. Still on the base layer: this must",
+        "happen *before* the arena is delegated."
+      ],
+      "discriminator": [
+        132,
+        226,
+        66,
+        101,
+        241,
+        252,
+        175,
+        8
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "open_position",
+      "docs": [
+        "ER. Open a long (side = 1) or short (side = -1) position priced by the oracle."
+      ],
+      "discriminator": [
+        135,
+        128,
+        47,
+        77,
+        15,
+        152,
+        240,
+        49
+      ],
+      "accounts": [
+        {
+          "name": "trader",
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "feed"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        },
+        {
+          "name": "side",
+          "type": "i8"
+        },
+        {
+          "name": "leverage",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "process_undelegation",
+      "discriminator": [
+        196,
+        28,
+        41,
+        206,
+        48,
+        37,
+        51,
+        167
+      ],
+      "accounts": [
+        {
+          "name": "base_account",
+          "writable": true
+        },
+        {
+          "name": "buffer",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  110,
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  101,
+                  45,
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "base_account"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                181,
+                183,
+                0,
+                225,
+                242,
+                87,
+                58,
+                192,
+                204,
+                6,
+                34,
+                1,
+                52,
+                74,
+                207,
+                151,
+                184,
+                53,
+                6,
+                235,
+                140,
+                229,
+                25,
+                152,
+                204,
+                98,
+                126,
+                24,
+                147,
+                128,
+                167,
+                62
+              ]
+            }
+          }
+        },
+        {
+          "name": "payer",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "account_seeds",
+          "type": {
+            "vec": "bytes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "record_round",
+      "docs": [
+        "BASE. Fold a closed arena into its series standings. Permissionless and idempotent:",
+        "the arena remembers it was counted, so a replay cannot inflate the table.",
+        "",
+        "Points: podium 10/6/3 + 1 per bite survived while holding + 2 for the last one standing."
+      ],
+      "discriminator": [
+        65,
+        203,
+        203,
+        176,
+        231,
+        96,
+        87,
+        123
+      ],
+      "accounts": [
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "series",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        },
+        {
+          "name": "series_key",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "request_shock",
+      "docs": [
+        "ER. Ask the oracle to bite. Permissionless crank: anyone can call it, but the",
+        "program enforces the cooldown, so nobody can spam the pit."
+      ],
+      "discriminator": [
+        6,
+        83,
+        169,
+        117,
+        114,
+        71,
+        32,
+        81
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_queue",
+          "docs": [
+            "and it has to be writable: the CPI appends the request to it."
+          ],
+          "writable": true
+        },
+        {
+          "name": "program_identity",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  100,
+                  101,
+                  110,
+                  116,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vrf_program",
+          "address": "Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz"
+        },
+        {
+          "name": "slot_hashes",
+          "address": "SysvarS1otHashes111111111111111111111111111"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "set_privacy",
+      "docs": [
+        "ER. Flip the arena between sealed and public. The member list is rebuilt from",
+        "scratch on every call — an update replaces it, it does not merge.",
+        "",
+        "Sealed = creator + every seated player can read the rollup state with their own",
+        "token; everybody else is rejected at the TEE ingress. Public = no members."
+      ],
+      "discriminator": [
+        120,
+        77,
+        9,
+        207,
+        149,
+        140,
+        138,
+        129
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "permission",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  101,
+                  114,
+                  109,
+                  105,
+                  115,
+                  115,
+                  105,
+                  111,
+                  110,
+                  58
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                136,
+                161,
+                10,
+                196,
+                33,
+                152,
+                1,
+                214,
+                246,
+                106,
+                29,
+                60,
+                6,
+                152,
+                192,
+                102,
+                169,
+                175,
+                212,
+                217,
+                180,
+                252,
+                231,
+                71,
+                151,
+                141,
+                209,
+                5,
+                168,
+                212,
+                103,
+                82
+              ]
+            }
+          }
+        },
+        {
+          "name": "permission_program",
+          "address": "ACLseoPoyC3cBqoUtkbjZ4aDrkurZW86v19pXz2XQnp1"
+        },
+        {
+          "name": "ephemeral_vault",
+          "writable": true,
+          "address": "MagicVau1t999999999999999999999999999999999"
+        },
+        {
+          "name": "magic_program",
+          "address": "Magic11111111111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "string"
+        },
+        {
+          "name": "is_private",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "settle",
+      "docs": [
+        "BASE LAYER. Pay the podium out of the escrow vault. Permissionless and",
+        "idempotent: the first call flips the arena to `Closed`.",
+        "",
+        "The podium accounts must be passed as `remaining_accounts`, in podium order,",
+        "because the vault signs a CPI system transfer to each one and a CPI can only",
+        "touch accounts present in its account list."
+      ],
+      "discriminator": [
+        175,
+        42,
+        185,
+        87,
+        144,
+        131,
+        102,
+        212
+      ],
+      "accounts": [
+        {
+          "name": "arena",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  114,
+                  101,
+                  110,
+                  97
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "arena"
+              }
+            ]
+          }
+        },
+        {
+          "name": "creator",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_nonce",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "shock_callback",
+      "docs": [
+        "ER. Oracle callback: force-close ONE random seat that is holding risk.",
+        "",
+        "Only seats with an open position are eligible, so being flat is a real defence.",
+        "`epoch` must match the arena's shock counter; a replayed or out-of-order callback",
+        "returns without touching state, so nobody gets bitten twice for the same request."
+      ],
+      "discriminator": [
+        135,
+        151,
+        168,
+        140,
+        127,
+        251,
+        156,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "vrf_program_identity",
+          "docs": [
+            "Scoped VRF identity PDA, bound to this program. Its presence as a signer proves",
+            "the callback was issued by the VRF program for this program."
+          ],
+          "signer": true
+        },
+        {
+          "name": "arena",
+          "writable": true
+        },
+        {
+          "name": "feed"
+        }
+      ],
+      "args": [
+        {
+          "name": "randomness",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "epoch",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Arena",
+      "discriminator": [
+        243,
+        215,
+        44,
+        44,
+        231,
+        211,
+        232,
+        168
+      ]
+    },
+    {
+      "name": "Series",
+      "discriminator": [
+        240,
+        97,
+        8,
+        183,
+        139,
+        77,
+        250,
+        162
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ArenaOpened",
+      "discriminator": [
+        204,
+        144,
+        7,
+        135,
+        154,
+        242,
+        88,
+        48
+      ]
+    },
+    {
+      "name": "MadTrade",
+      "discriminator": [
+        124,
+        56,
+        189,
+        95,
+        201,
+        127,
+        133,
+        115
+      ]
+    },
+    {
+      "name": "Madness",
+      "discriminator": [
+        82,
+        165,
+        143,
+        177,
+        2,
+        25,
+        250,
+        219
+      ]
+    },
+    {
+      "name": "PositionClosed",
+      "discriminator": [
+        157,
+        163,
+        227,
+        228,
+        13,
+        97,
+        138,
+        121
+      ]
+    },
+    {
+      "name": "PositionOpened",
+      "discriminator": [
+        237,
+        175,
+        243,
+        230,
+        147,
+        117,
+        101,
+        121
+      ]
+    },
+    {
+      "name": "RoundSettled",
+      "discriminator": [
+        249,
+        225,
+        66,
+        54,
+        157,
+        200,
+        234,
+        222
+      ]
+    },
+    {
+      "name": "SeatTaken",
+      "discriminator": [
+        175,
+        78,
+        124,
+        103,
+        251,
+        182,
+        225,
+        198
+      ]
+    },
+    {
+      "name": "SeriesOpened",
+      "discriminator": [
+        203,
+        170,
+        78,
+        184,
+        137,
+        221,
+        220,
+        207
+      ]
+    },
+    {
+      "name": "SeriesRoundRecorded",
+      "discriminator": [
+        238,
+        107,
+        72,
+        34,
+        13,
+        89,
+        91,
+        70
+      ]
+    },
+    {
+      "name": "ShockApplied",
+      "discriminator": [
+        36,
+        8,
+        81,
+        124,
+        91,
+        16,
+        242,
+        254
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidParam",
+      "msg": "Invalid parameter"
+    },
+    {
+      "code": 6001,
+      "name": "ArenaNotOpen",
+      "msg": "Arena is not open"
+    },
+    {
+      "code": 6002,
+      "name": "ArenaNotLive",
+      "msg": "Arena is not live"
+    },
+    {
+      "code": 6003,
+      "name": "ArenaFull",
+      "msg": "Arena is full"
+    },
+    {
+      "code": 6004,
+      "name": "AlreadyJoined",
+      "msg": "Player already joined this arena"
+    },
+    {
+      "code": 6005,
+      "name": "NotEnoughPlayers",
+      "msg": "Not enough players to start"
+    },
+    {
+      "code": 6006,
+      "name": "NotASeat",
+      "msg": "Signer is not a seat in this arena"
+    },
+    {
+      "code": 6007,
+      "name": "Unauthorized",
+      "msg": "Signer is not the arena creator"
+    },
+    {
+      "code": 6008,
+      "name": "PositionOpen",
+      "msg": "A position is already open"
+    },
+    {
+      "code": 6009,
+      "name": "NoPosition",
+      "msg": "No position is open"
+    },
+    {
+      "code": 6010,
+      "name": "InvalidSide",
+      "msg": "Invalid side, expected 1 or -1"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidLeverage",
+      "msg": "Invalid leverage"
+    },
+    {
+      "code": 6012,
+      "name": "RoundNotOver",
+      "msg": "Round is not over yet"
+    },
+    {
+      "code": 6013,
+      "name": "RoundClosed",
+      "msg": "Round is closed for trading"
+    },
+    {
+      "code": 6014,
+      "name": "NotSettled",
+      "msg": "Arena is not settled"
+    },
+    {
+      "code": 6015,
+      "name": "AlreadySettled",
+      "msg": "Arena is already settled"
+    },
+    {
+      "code": 6016,
+      "name": "MathOverflow",
+      "msg": "Math overflow"
+    },
+    {
+      "code": 6017,
+      "name": "WrongFeed",
+      "msg": "Wrong price feed account"
+    },
+    {
+      "code": 6018,
+      "name": "BadFeedData",
+      "msg": "Malformed price feed account"
+    },
+    {
+      "code": 6019,
+      "name": "StalePrice",
+      "msg": "Invalid or stale price"
+    },
+    {
+      "code": 6020,
+      "name": "BadPrice",
+      "msg": "Price value out of domain"
+    },
+    {
+      "code": 6021,
+      "name": "ShockAlreadyApplied",
+      "msg": "A shock was already applied to this arena"
+    },
+    {
+      "code": 6022,
+      "name": "ShockCooldown",
+      "msg": "The pit needs to breathe: shock cooldown not elapsed"
+    },
+    {
+      "code": 6023,
+      "name": "NoOpenPositions",
+      "msg": "Nobody is holding risk: no open positions to bite"
+    },
+    {
+      "code": 6024,
+      "name": "PitAsleep",
+      "msg": "The pit sleeps before the bell: no bite fits before the round ends"
+    },
+    {
+      "code": 6025,
+      "name": "SeriesComplete",
+      "msg": "This series already played all its rounds"
+    },
+    {
+      "code": 6026,
+      "name": "RoundAlreadyRecorded",
+      "msg": "This round was already recorded in the series"
+    }
+  ],
+  "types": [
+    {
+      "name": "Arena",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "feed",
+            "type": "pubkey"
+          },
+          {
+            "name": "entry_fee",
+            "type": "u64"
+          },
+          {
+            "name": "pot",
+            "type": "u64"
+          },
+          {
+            "name": "start_at",
+            "type": "i64"
+          },
+          {
+            "name": "end_at",
+            "type": "i64"
+          },
+          {
+            "name": "duration",
+            "type": "i64"
+          },
+          {
+            "name": "rake_bps",
+            "type": "u16"
+          },
+          {
+            "name": "max_players",
+            "type": "u8"
+          },
+          {
+            "name": "player_count",
+            "type": "u8"
+          },
+          {
+            "name": "winner_count",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "ArenaStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          },
+          {
+            "name": "nonce",
+            "docs": [
+              "Raw bytes of the PDA nonce, plus its length. Stored so any client can rebuild the",
+              "arena seeds without keeping an off-chain registry. Zero-padded."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce_len",
+            "type": "u8"
+          },
+          {
+            "name": "is_private",
+            "docs": [
+              "True while the ephemeral permission seals this arena. Mirrors the permission",
+              "account so clients can read the policy without the (devnet-404) status endpoint."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "shock_seat",
+            "docs": [
+              "Last seat the pit bit, or `NO_SHOCK`."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "shock_count",
+            "docs": [
+              "How many shocks have landed this round. Also the epoch used to reject stale callbacks."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "last_shock_ts",
+            "docs": [
+              "Unix ts of the last shock, for the cooldown."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "series",
+            "docs": [
+              "Serie a la que pertenece la ronda, o `Pubkey::default()` si es partida suelta."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "round_no",
+            "docs": [
+              "Número de ronda dentro de la serie (1..3)."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "lst_winner",
+            "docs": [
+              "Quien se quedó como única posición abierta al campanazo."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "lst_bonus",
+            "docs": [
+              "Bono pagado por eso, en lamports. Se calcula en `settle`."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "series_recorded",
+            "docs": [
+              "Evita que una ronda se cuente dos veces en la serie."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "seats",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Seat"
+                  }
+                },
+                8
+              ]
+            }
+          },
+          {
+            "name": "results",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "PitResult"
+                  }
+                },
+                3
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArenaOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "feed",
+            "type": "pubkey"
+          },
+          {
+            "name": "entry_fee",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArenaStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Live"
+          },
+          {
+            "name": "Settled"
+          },
+          {
+            "name": "Closed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MadTrade",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "seat",
+            "type": "u8"
+          },
+          {
+            "name": "wanted",
+            "docs": [
+              "Lo que pidió el agente."
+            ],
+            "type": "i8"
+          },
+          {
+            "name": "executed",
+            "docs": [
+              "Lo que ejecutó el pozo."
+            ],
+            "type": "i8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Madness",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "seat",
+            "type": "u8"
+          },
+          {
+            "name": "until",
+            "type": "i64"
+          },
+          {
+            "name": "pressure",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PitResult",
+      "docs": [
+        "Snapshot of a podium place, written on the ER and read after undelegation."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "equity",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "pnl",
+            "type": "i64"
+          },
+          {
+            "name": "exit_price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PositionOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "side",
+            "type": "i8"
+          },
+          {
+            "name": "notional",
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoundSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "pot",
+            "type": "u64"
+          },
+          {
+            "name": "winner_count",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Seat",
+      "docs": [
+        "One seat in the arena. `bankroll` and `realized` are fixed-point (1e9 == 1.0)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "bankroll",
+            "type": "u64"
+          },
+          {
+            "name": "realized",
+            "type": "i64"
+          },
+          {
+            "name": "notional",
+            "type": "u64"
+          },
+          {
+            "name": "entry_price",
+            "type": "u64"
+          },
+          {
+            "name": "trades",
+            "type": "u16"
+          },
+          {
+            "name": "side",
+            "docs": [
+              "0 = flat, 1 = long, -1 = short"
+            ],
+            "type": "i8"
+          },
+          {
+            "name": "bites",
+            "docs": [
+              "Cuántas veces el pozo te sacó de una posición."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "streak",
+            "docs": [
+              "Mordidas seguidas que sobreviviste estando dentro del mercado."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "pressure",
+            "docs": [
+              "Presión acumulada (0..=100). Al llenarse, el asiento entra en fiebre."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "mad_until",
+            "docs": [
+              "Unix ts hasta el que el asiento está en fiebre. 0 = cuerdo."
+            ],
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeatTaken",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "pot",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Series",
+      "docs": [
+        "Tres rondas encadenadas. Los puntos viven on-chain, no en el cliente."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "rounds",
+            "type": "u8"
+          },
+          {
+            "name": "max_rounds",
+            "type": "u8"
+          },
+          {
+            "name": "entry_fee",
+            "type": "u64"
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce_len",
+            "type": "u8"
+          },
+          {
+            "name": "standings",
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "Standing"
+                  }
+                },
+                8
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeriesOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "series",
+            "type": "pubkey"
+          },
+          {
+            "name": "creator",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_rounds",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SeriesRoundRecorded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "series",
+            "type": "pubkey"
+          },
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "round_no",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ShockApplied",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "arena",
+            "type": "pubkey"
+          },
+          {
+            "name": "seat",
+            "type": "u8"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "count",
+            "docs": [
+              "Shock number for this round, so clients can order the kill feed."
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Standing",
+      "docs": [
+        "Una fila de la tabla de una serie."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "player",
+            "type": "pubkey"
+          },
+          {
+            "name": "points",
+            "type": "u16"
+          },
+          {
+            "name": "rounds",
+            "type": "u8"
+          },
+          {
+            "name": "podiums",
+            "type": "u8"
+          },
+          {
+            "name": "bites",
+            "type": "u16"
+          },
+          {
+            "name": "survived",
+            "type": "u16"
+          }
+        ]
+      }
+    }
+  ]
+}

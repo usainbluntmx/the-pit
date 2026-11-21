@@ -1,0 +1,23 @@
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
+.surfpool
+
+# frontend build
+.next/
+**/.next/
+*.tsbuildinfo
+
+# secretos: nunca se commitean
+.bot.json
+*.keypair.json
+id.json
+.env
+.env.*
+
+# deploy
+.vercel
