@@ -28,8 +28,11 @@ a VRF oracle picks one player holding a position and force-closes them at market
 callback is identity-checked on-chain. Pressure from bites and losing closes builds toward
 "fever", where the program inverts your orders for 20 seconds. At the bell the round is
 committed back to Solana, positions are revealed, and the vault pays the podium. Series chain
-three rounds with on-chain points. Everything is permissionless and verifiable: the frontend is
-just a client.
+three rounds with on-chain points. A lone player can run a **solo arena** against the market:
+one seat, the same entry, and a house PDA that pays up to 3× the entry if the run beats 1,000
+credits (and keeps it if it does not). The app also derives a disposable **trading account** in
+the browser, funded by a devnet faucet, so the main wallet signs once and orders never pop the
+extension again. Everything is permissionless and verifiable: the frontend is just a client.
 
 ## Categoría
 
@@ -52,6 +55,14 @@ Entertainment Finance · Trading / gaming · DeFi consumer
   (3 asientos, pozo 0.03 SOL, pagos 60/25/15, estado `closed`)
 - **Arena en vivo / abierta:** `G6Qnx7x14BZkT1b7Lbzkge5n1EkazHtzxHzJiurbap2B`
 - **Serie verificada:** `season-01`, 3 rondas de 60 s, puntos on-chain (23 / 18 / 18)
+- **Modo solo verificado:** arena `GnwU16uzvtZrzmk2dwJsSyi9foNznE8Rc5RPFnytCWUr`
+  (1 asiento, equity 1002.12 → pago 1×, jugador +0.01 SOL) y una corrida de 120 s
+  (equity 997.22 → 0×, la casa retuvo la entrada). Casa:
+  `7VgmHJJxBq4UxpfW3iy8KzUP6vRTu7RDWAQz2d3Bg8hp`
+- **Tests deterministas:** `cargo test -p the-pit` — 6 unitarios + `join_flow` +
+  `onchain_layout` + 4 de `settle_solo` (victoria, derrota, empate y rechazo de `settle`)
+- **Trading account:** keypair generado en el navegador, vinculado con una firma de la
+  wallet principal y fondeado con 0.05 SOL por `/api/faucet` (rate limit por wallet e IP)
 
 Transacciones recientes del programa (finalizadas, sin error):
 
@@ -89,8 +100,8 @@ sirven para jugar. Sin ER no hay juego, y sin TEE el libro sería público.
 - [x] Programa completo y verificado en devnet
 - [x] Frontend bilingüe ES/EN, wallet propia, ciclo completo desde la UI
 - [x] Deploy público + repo abierto + video demo
-- [ ] Modo solitario contra el mercado (diseñado, no implementado)
-- [ ] Trading account con fondeo de la app (diseñado, no implementado)
+- [x] Modo solitario contra el mercado (`settle_solo`, casa PDA, 4 tests)
+- [x] Trading account con fondeo de la app y retiro a la wallet principal
 
 ## Equipo
 

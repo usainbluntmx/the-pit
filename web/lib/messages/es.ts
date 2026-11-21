@@ -161,6 +161,18 @@ export const es: Copy = {
     getWallet: (label: string) => `Instalar ${label}`,
     connectHint:
       "Tus llaves nunca salen de la extensión: la app solo le pide firmar transacciones y el challenge del enclave. Necesitas SOL de devnet para pagar la entrada; al conectar aparece un botón de airdrop debajo de la wallet.",
+    tradingTitle: "Trading account",
+    tradingBody:
+      "Una wallet de devnet aparte, generada en este navegador y fondeada por nosotros. Tu wallet principal firma un solo mensaje para vincularla; de ahí en adelante cada orden la firma la trading account, así no apruebas un popup por operación.",
+    tradingCreate: "Crear y fondear trading account",
+    tradingCreating: "creando…",
+    tradingActive: "Trading account activa",
+    tradingWithdraw: "Retirar a mi wallet",
+    tradingUseMain: "Usar mi wallet principal",
+    tradingUseAccount: "Usar trading account",
+    tradingFunded: "Fondeada con {amount} SOL",
+    tradingNote:
+      "Solo devnet: la llave vive en este navegador. Retira el saldo antes de borrar los datos del sitio.",
     lowBalance: "Saldo de devnet bajo",
     requesting: "solicitando…",
     requestOne: "Pedir 1 SOL de devnet",
@@ -188,6 +200,12 @@ export const es: Copy = {
     roundSeconds: "Ronda (segundos)",
     seatsLabel: "Asientos",
     marketLabel: "Mercado",
+    modeLabel: "Modo",
+    modeArena: "Arena · 2–8 jugadores",
+    modeSolo: "Solo · contra el mercado",
+    soloBadge: "solo",
+    hostHintSolo:
+      "Una corrida solo tiene un asiento: tú contra el feed de Pyth. La casa (PDA del programa) es la contraparte: paga hasta 3× tu entrada si le ganas al mercado, y se la queda si terminas debajo de 1,000 créditos. Igual hay que bloquear la arena para arrancar el reloj.",
     seriesToggle: "Serie · 3 rondas, puntos acumulados",
     singleToggle: "Ronda suelta",
     create: "Crear arena",
@@ -201,8 +219,8 @@ export const es: Copy = {
     guide: {
       wallet: {
         title: "Esta es tu wallet",
-        body: "Conecta Phantom, Solflare o Backpack. La dirección y el saldo de SOL de la derecha son tuyos: la app nunca crea una wallet por ti.",
-        why: "Nada es custodia: cada transacción se firma dentro de tu extensión y el token del enclave se firma igual. Si el saldo está bajo, el botón de airdrop aparece aquí mismo.",
+        body: "Conecta Phantom, Solflare o Backpack. La dirección y el saldo de SOL de la derecha son tuyos; la app también puede derivar una trading account desechable para que no firmes cada orden con ella.",
+        why: "Nada es custodia: cada transacción se firma dentro de tu extensión (o con la llave de la trading account en este navegador) y el token del enclave se firma igual. Si el saldo está bajo, el botón de airdrop aparece aquí mismo.",
       },
       board: {
         title: "El tablero",

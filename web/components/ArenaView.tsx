@@ -26,6 +26,9 @@ import {
   shortKey,
   sol,
   statusOf,
+  soloPayoutSol,
+  soloMultiplierBps,
+  housePda,
   teeConnection,
   teeToken,
   waitFor,
@@ -231,11 +234,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const madLeft = iAmMad ? Number((mySeat as any).madUntil) - now : 0;
   const pressure = mySeat ? Number((mySeat as any).pressure ?? 0) : 0;
   const revealed = status === "settled" || status === "closed";
+  const isSolo = arena ? arena.maxPlayers === 1 : false;
   const shareUrl =
     typeof window !== "undefined"
       ? `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/play?arena=${arenaPubkey.toBase58()}`
       : "";
-  const needMore = arena ? Math.max(0, 2 - arena.playerCount) : 0;
+  const needMore = arena ? (isSolo ? 0 : Math.max(0, 2 - arena.playerCount)) : 0;
   const entrySol = arena ? sol(arena.entryFee) : 0;
 
   const copyInvite = async () => {
@@ -462,6 +466,22 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const settle = () =>
     run("settle", async () => {
       const program = programAt(base, wallet.publicKey);
+
+      // Solo run: the house PDA is the counterparty, the entry is the stake.
+      if (arena!.playerCount === 1) {
+        const tx = await program.methods
+          .settleSolo(nonce)
+          .accounts({
+            arena: arenaPubkey,
+            vault: vaultOf(arenaPubkey),
+            house: housePda(),
+            player: arena!.results[0].player,
+            systemProgram: SystemProgram.programId,
+          })
+          .transaction();
+        return sendTx(base, tx, wallet);
+      }
+
       const podium = arena!.results
         .slice(0, arena!.winnerCount)
         .map((r) => ({ pubkey: r.player, isSigner: false, isWritable: true }));
@@ -591,15 +611,23 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             })}
           </div>
           <div className="split">
-            <span>
-              <b>60%</b> {t("1st")}
-            </span>
-            <span>
-              <b>25%</b> {t("2nd")}
-            </span>
-            <span>
-              <b>15%</b> {t("3rd")}
-            </span>
+            {isSolo ? (
+              <span style={{ color: "var(--muted)" }}>
+                {t("solo payout · 1.00× / 1.25× / 1.50× / 2.00× / 3.00×")}
+              </span>
+            ) : (
+              <>
+                <span>
+                  <b>60%</b> {t("1st")}
+                </span>
+                <span>
+                  <b>25%</b> {t("2nd")}
+                </span>
+                <span>
+                  <b>15%</b> {t("3rd")}
+                </span>
+              </>
+            )}
           </div>
         </div>
         <div className="stat">
@@ -664,12 +692,16 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           </div>
           <div className="nextstep-what">
             {myIndex < 0
-              ? t("Join for {amount} SOL and start with 1,000 credits", { amount: fmtSol(entrySol, 3) })
+              ? isSolo
+                ? t("Join for {amount} SOL and run against the market", { amount: fmtSol(entrySol, 3) })
+                : t("Join for {amount} SOL and start with 1,000 credits", { amount: fmtSol(entrySol, 3) })
               : needMore > 0
                 ? t("You are in — the round cannot start alone")
-                : isCreator
-                  ? t("Everyone is in: lock the arena to start the clock")
-                  : t("Everyone is in: waiting for the host to lock")}
+                : isSolo
+                  ? t("You are in — lock the arena to start the clock")
+                  : isCreator
+                    ? t("Everyone is in: lock the arena to start the clock")
+                    : t("Everyone is in: waiting for the host to lock")}
           </div>
           <ul className="nextstep-steps">
             <li>
@@ -683,7 +715,11 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             <li>
               <span className="nextstep-num">2</span>
               <span>
-                <Rich text={t("A round needs **2 players**. Copy the invite link and send it — **no bots join by themselves**.")} />
+                {isSolo ? (
+                  t("This is a solo run: one seat, no invite. Lock it to start the clock.")
+                ) : (
+                  <Rich text={t("A round needs **2 players**. Copy the invite link and send it — **no bots join by themselves**.")} />
+                )}
               </span>
             </li>
             <li>
@@ -707,11 +743,11 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 {busy === "lock" ? t("locking…") : t("Lock & start round")}
               </button>
             )}
-            <button className="btn ghost" onClick={copyInvite}>
+            <button className="btn ghost" onClick={copyInvite} style={{ display: isSolo ? "none" : undefined }}>
               {copiedLink ? t("link copied ✓") : t("Copy invite link")}
             </button>
           </div>
-          <p className="nextstep-note">
+          <p className="nextstep-note" style={{ display: isSolo ? "none" : undefined }}>
             {t("Nobody joins automatically — this arena only fills with wallets you invite. The link opens it directly, so the other player lands on this same table.")}
           </p>
           {myIndex < 0 && balance < entrySol && (
@@ -774,7 +810,11 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             </li>
             <li>
               <span className="nextstep-num">2</span>
-              <span>{t("Settle: the escrow vault pays 60/25/15 to the top three, plus the last-one-standing bonus.")}</span>
+              <span>
+                {isSolo
+                  ? t("Settle: the house pays your multiplier out of the entry and its own balance.")
+                  : t("Settle: the escrow vault pays 60/25/15 to the top three, plus the last-one-standing bonus.")}
+              </span>
             </li>
           </ul>
         </div>
@@ -786,7 +826,11 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             <span className="nextstep-title">{t("Round paid")}</span>
             <span className="pill mono">{t("{n} seats", { n: arena.playerCount })}</span>
           </div>
-          <div className="nextstep-what">{t("The podium took the pot — start the next one")}</div>
+          <div className="nextstep-what">
+            {isSolo
+              ? t("Solo run settled — start the next one")
+              : t("The podium took the pot — start the next one")}
+          </div>
           <div className="nextstep-actions">
             <button className="btn ghost" onClick={onBack}>
               {t("Back to the lobby")}
@@ -1014,7 +1058,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             {(status === "settled" || status === "closed") && (
               <>
                 <p className="hint" style={{ marginTop: 0 }}>
-                  {t("Round closed. Podium settled from the escrow vault.")}
+                  {isSolo
+                    ? t("Round closed. The house paid your multiplier.")
+                    : t("Round closed. Podium settled from the escrow vault.")}
                 </p>
                 {arena.results.slice(0, arena.winnerCount).map((r, i) => (
                   <div className="row" key={r.player.toBase58()} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
@@ -1023,6 +1069,15 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                     <span className="pnl up">{(Number(r.equity) / FIXED).toFixed(4)}</span>
                   </div>
                 ))}
+                {isSolo && arena.results[0] && (
+                  <div className="row" style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                    <span className="who">{t("Solo payout")}</span>
+                    <span className="pnl up">
+                      {(soloMultiplierBps(Number(arena.results[0].equity) / FIXED) / 10_000).toFixed(2)}× ·{" "}
+                      {fmtSol(soloPayoutSol(entrySol, Number(arena.results[0].equity) / FIXED), 4)} SOL
+                    </span>
+                  </div>
+                )}
                 <div style={{ marginTop: 14 }}>
                   <a
                     className="btn ghost"
@@ -1041,11 +1096,17 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           {/* Host / lifecycle controls */}
           <div className="actions" data-guide="actions">
             {status === "open" && isCreator && (
-              <button className="btn ghost" disabled={busy !== null || arena.playerCount < 2} onClick={lock}>
+              <button
+                className="btn ghost"
+                disabled={busy !== null || arena.playerCount < (isSolo ? 1 : 2)}
+                onClick={lock}
+              >
                 {busy === "lock"
                   ? t("locking…")
-                  : arena.playerCount < 2
-                    ? t("need 2+ players")
+                  : arena.playerCount < (isSolo ? 1 : 2)
+                    ? isSolo
+                      ? t("need 1 player")
+                      : t("need 2+ players")
                     : t("Lock & start round")}
               </button>
             )}

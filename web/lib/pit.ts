@@ -494,4 +494,27 @@ export const shortKey = (k: PublicKey | string) => {
   return `${s.slice(0, 4)}…${s.slice(-4)}`;
 };
 
+/* ------------------------------ solo mode -------------------------------- */
+
+/** Program-owned PDA that acts as the counterparty of every solo run. */
+export function housePda(): PublicKey {
+  return PublicKey.findProgramAddressSync([Buffer.from("house")], PROGRAM_ID)[0];
+}
+
+/**
+ * Multiplier (bps of the entry) for a final equity in credits. Mirrors
+ * `solo_multiplier_bps` in the program; the on-chain result is authoritative.
+ */
+export function soloMultiplierBps(equity: number): number {
+  if (equity < 1000) return 0;
+  if (equity < 1050) return 10_000;
+  if (equity < 1100) return 12_500;
+  if (equity < 1200) return 15_000;
+  if (equity < 1300) return 20_000;
+  return 30_000;
+}
+
+export const soloPayoutSol = (entrySol: number, equity: number) =>
+  (entrySol * soloMultiplierBps(equity)) / 10_000;
+
 export const equityOf = (seat: Seat) => (Number(seat.bankroll) + Number(seat.realized)) / FIXED;

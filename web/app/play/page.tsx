@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import Link from "next/link";
 import ArenaView from "@/components/ArenaView";
 import Guide, { type GuideStep } from "@/components/Guide";
@@ -37,6 +37,7 @@ import {
   reconnectWallet,
   requestAirdrop,
 } from "@/lib/wallet";
+import { linkAndFund, loadTrading, saveTrading, tradingWallet, withdrawTrading } from "@/lib/trading";
 
 const ARENAS_KEY = "pit:arenas";
 /** Empty on a normal deploy; "/the-pit" on GitHub Pages. */
@@ -65,6 +66,9 @@ function knownArenas(): string[] {
 
 export default function Home() {
   const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [owner, setOwner] = useState<Wallet | null>(null);
+  const [trading, setTrading] = useState<Keypair | null>(null);
+  const [linking, setLinking] = useState(false);
   const [wallets, setWallets] = useState<DetectedWallet[]>([]);
   const [picking, setPicking] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -82,6 +86,7 @@ export default function Home() {
   const [seriesMode, setSeriesMode] = useState(false);
   const [seriesList, setSeriesList] = useState<SeriesAccount[]>([]);
   const [maxPlayers, setMaxPlayers] = useState(8);
+  const [solo, setSolo] = useState(false);
   const [asset, setAsset] = useState("SOL");
   const [guideOpen, setGuideOpen] = useState(false);
   const { c } = useI18n();
@@ -94,6 +99,22 @@ export default function Home() {
   ];
 
   const base = useMemo(() => baseConnection(), []);
+
+  /**
+   * After the main wallet connects, prefer its trading account when one exists:
+   * the rest of the app then signs everything with the disposable key.
+   */
+  const adoptWallet = useCallback((main: Wallet) => {
+    setOwner(main);
+    const kp = loadTrading(main.publicKey.toBase58());
+    if (kp) {
+      setTrading(kp);
+      setWallet(tradingWallet(kp, main.publicKey));
+    } else {
+      setTrading(null);
+      setWallet(main);
+    }
+  }, []);
 
   useEffect(() => {
     setKnown(knownArenas());
@@ -110,14 +131,14 @@ export default function Home() {
     // Extensions inject after hydration, so re-scan once the page is idle.
     const t = window.setTimeout(() => setWallets(detectWallets()), 900);
     reconnectWallet().then((w) => {
-      if (w) setWallet(w);
+      if (w) adoptWallet(w);
     });
     // First visit: walk the user through the board once.
     if (!window.localStorage.getItem("pit:guide:lobby")) {
       window.setTimeout(() => setGuideOpen(true), 1100);
     }
     return () => window.clearTimeout(t);
-  }, []);
+  }, [adoptWallet]);
 
   const refreshSeries = useCallback(async () => {
     const rows = await Promise.all(
@@ -151,7 +172,7 @@ export default function Home() {
     setError(null);
     try {
       const w = await connectWallet(id);
-      setWallet(w);
+      adoptWallet(w);
       setPicking(false);
       setNotice(c.play.connectedWith(w.label));
     } catch (e: any) {
@@ -162,7 +183,9 @@ export default function Home() {
   };
 
   const disconnect = async () => {
-    await wallet?.disconnect();
+    await owner?.disconnect();
+    setOwner(null);
+    setTrading(null);
     setWallet(null);
     setBalance(0);
     setNotice(null);
@@ -178,6 +201,44 @@ export default function Home() {
       setBalance((await base.getBalance(wallet.publicKey)) / LAMPORTS_PER_SOL);
     } catch (e: any) {
       setError(c.common.airdropFailed(e?.message ?? String(e)));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const createTrading = async () => {
+    if (!owner) {
+      setPicking(true);
+      return;
+    }
+    setLinking(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const kp = Keypair.generate();
+      const { amount } = await linkAndFund(owner, kp);
+      saveTrading(owner.publicKey.toBase58(), kp);
+      setTrading(kp);
+      setWallet(tradingWallet(kp, owner.publicKey));
+      setBalance((await base.getBalance(kp.publicKey)) / LAMPORTS_PER_SOL);
+      setNotice(`${c.play.tradingFunded.replace("{amount}", String(amount))} · ${shortKey(kp.publicKey)}`);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  const withdraw = async () => {
+    if (!trading || !owner) return;
+    setBusy("withdraw");
+    setError(null);
+    try {
+      const sig = await withdrawTrading(trading, owner.publicKey, base);
+      setNotice(`withdraw · ${sig.slice(0, 8)}…${sig.slice(-6)}`);
+      setBalance((await base.getBalance(trading.publicKey)) / LAMPORTS_PER_SOL);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
     } finally {
       setBusy(null);
     }
@@ -214,7 +275,7 @@ export default function Home() {
         nonce,
         entryFeeSol: entryFee,
         durationSecs: duration,
-        maxPlayers,
+        maxPlayers: solo ? 1 : maxPlayers,
         rakeBps: 0,
         feed: FEEDS[asset].address,
         creator: wallet.publicKey,
@@ -260,6 +321,8 @@ export default function Home() {
     return <ArenaView arenaPubkey={selected} wallet={wallet} onBack={closeArena} />;
   }
 
+  const onTrading = !!(wallet && trading && wallet.publicKey.equals(trading.publicKey));
+
   return (
     <div className="shell">
       <div className="grid-bg" />
@@ -277,6 +340,11 @@ export default function Home() {
             <button className="help-btn" onClick={() => setGuideOpen(true)} title={c.common.replayTour}>
               {c.common.guide}
             </button>
+            {onTrading && (
+              <span className="pill" title={owner?.publicKey.toBase58()}>
+                <span className="dot" /> trading
+              </span>
+            )}
             <span className="pill mono">{balance.toFixed(3)} SOL</span>
             <span className="pill mono">{shortKey(wallet.publicKey)}</span>
             <button
@@ -371,6 +439,61 @@ export default function Home() {
         </div>
       )}
 
+      {owner && (
+        <div className="panel" style={{ marginTop: 4 }}>
+          <div className="panel-head">
+            <span>{trading ? c.play.tradingActive : c.play.tradingTitle}</span>
+            <span className="mono">{trading ? shortKey(trading.publicKey) : "devnet"}</span>
+          </div>
+          <div style={{ padding: 16, display: "grid", gap: 10 }}>
+            {!trading ? (
+              <>
+                <p className="hint" style={{ margin: 0 }}>
+                  {c.play.tradingBody}
+                </p>
+                <button className="btn" disabled={linking} onClick={createTrading}>
+                  {linking ? c.play.tradingCreating : c.play.tradingCreate}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="hint" style={{ margin: 0 }}>
+                  {c.play.tradingNote}{" "}
+                  <span className="mono" title={owner.publicKey.toBase58()}>
+                    owner {shortKey(owner.publicKey)}
+                  </span>
+                </p>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  <button
+                    className="btn ghost"
+                    style={{ flex: 1 }}
+                    disabled={busy !== null}
+                    onClick={withdraw}
+                  >
+                    {c.play.tradingWithdraw}
+                  </button>
+                  <button
+                    className="btn ghost"
+                    style={{ flex: 1 }}
+                    onClick={() =>
+                      setWallet(
+                        onTrading && owner
+                          ? owner
+                          : trading && owner
+                            ? tradingWallet(trading, owner.publicKey)
+                            : null,
+                      )
+                    }
+                  >
+                    {onTrading ? c.play.tradingUseMain : c.play.tradingUseAccount}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {error && <div className="err">{error}</div>}
       {notice && <div className="ok">{notice}</div>}
 
@@ -391,8 +514,11 @@ export default function Home() {
             >
               <div className="card-top">
                 <span className={`tag ${st}`}>{c.status[st]}</span>
-                <span className="mono" style={{ fontSize: 11, color: "var(--dim)" }}>
-                  {shortKey(a.publicKey)}
+                <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {a.maxPlayers === 1 && <span className="pill">{c.play.soloBadge}</span>}
+                  <span className="mono" style={{ fontSize: 11, color: "var(--dim)" }}>
+                    {shortKey(a.publicKey)}
+                  </span>
                 </span>
               </div>
               <div className="card-pot">{fmtSol(sol(a.pot))} SOL</div>
@@ -480,6 +606,23 @@ export default function Home() {
         >
           <label className="field" style={{ margin: 0 }}>
             <div className="field-label">
+              <span>{c.play.modeLabel}</span>
+            </div>
+            <select
+              value={solo ? "solo" : "arena"}
+              onChange={(e) => setSolo(e.target.value === "solo")}
+              style={{ ...inputStyle, cursor: "pointer" }}
+            >
+              <option value="arena" style={{ background: "var(--panel-2)" }}>
+                {c.play.modeArena}
+              </option>
+              <option value="solo" style={{ background: "var(--panel-2)" }}>
+                {c.play.modeSolo}
+              </option>
+            </select>
+          </label>
+          <label className="field" style={{ margin: 0 }}>
+            <div className="field-label">
               <span>{c.play.entryFee}</span>
             </div>
             <input
@@ -510,11 +653,12 @@ export default function Home() {
             </div>
             <input
               type="number"
-              min="2"
-              max="8"
-              value={maxPlayers}
+              min={solo ? 1 : 2}
+              max={solo ? 1 : 8}
+              value={solo ? 1 : maxPlayers}
+              disabled={solo}
               onChange={(e) => setMaxPlayers(Number(e.target.value))}
-              style={inputStyle}
+              style={{ ...inputStyle, opacity: solo ? 0.55 : 1 }}
             />
           </label>
           <label className="field" style={{ margin: 0 }}>
@@ -549,7 +693,7 @@ export default function Home() {
             {busy === "create" ? c.play.creating : c.play.create}
           </button>
           <p className="hint">
-            {c.play.hostHint}
+            {solo ? c.play.hostHintSolo : c.play.hostHint}
           </p>
         </div>
       </div>

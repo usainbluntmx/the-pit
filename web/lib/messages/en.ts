@@ -159,6 +159,18 @@ export const en = {
     getWallet: (label: string) => `Get ${label}`,
     connectHint:
       "Your keys never leave the extension: the app only asks it to sign transactions and the enclave challenge. You need devnet SOL to pay the entry fee — there is an airdrop button under the wallet once connected.",
+    tradingTitle: "Trading account",
+    tradingBody:
+      "A separate devnet wallet generated in this browser and funded by us. Your main wallet signs one message to link it; after that every order is signed by the trading account, so you do not approve a popup per trade.",
+    tradingCreate: "Create & fund trading account",
+    tradingCreating: "creating…",
+    tradingActive: "Trading account active",
+    tradingWithdraw: "Withdraw to my wallet",
+    tradingUseMain: "Use my main wallet",
+    tradingUseAccount: "Use trading account",
+    tradingFunded: "Funded with {amount} SOL",
+    tradingNote:
+      "Devnet only: the key lives in this browser. Withdraw the balance before clearing site data.",
     lowBalance: "Low devnet balance",
     requesting: "requesting…",
     requestOne: "Request 1 devnet SOL",
@@ -186,6 +198,12 @@ export const en = {
     roundSeconds: "Round (seconds)",
     seatsLabel: "Seats",
     marketLabel: "Market",
+    modeLabel: "Mode",
+    modeArena: "Arena · 2–8 players",
+    modeSolo: "Solo · against the market",
+    soloBadge: "solo",
+    hostHintSolo:
+      "A solo run has one seat: you against the Pyth feed. The house PDA is the counterparty — it pays up to 3× your entry if you beat the market, and keeps it if you end below 1,000 credits. You still need to lock the arena to start the clock.",
     seriesToggle: "Series · 3 rounds, cumulative points",
     singleToggle: "Single round",
     create: "Create arena",
@@ -199,8 +217,8 @@ export const en = {
     guide: {
       wallet: {
         title: "This is your wallet",
-        body: "Connect Phantom, Solflare or Backpack. The address and the SOL balance on the right are yours — the app never creates one for you.",
-        why: "Nothing is custodial: every transaction is signed inside your extension and the enclave token is signed the same way. If the balance is low, the airdrop button appears right here.",
+        body: "Connect Phantom, Solflare or Backpack. The address and the SOL balance on the right are yours — the app can also derive a disposable trading account so you do not sign every order with it.",
+        why: "Nothing is custodial: every transaction is signed inside your extension (or by the trading account key in this browser) and the enclave token is signed the same way. If the balance is low, the airdrop button appears right here.",
       },
       board: {
         title: "The board",
