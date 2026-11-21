@@ -143,6 +143,12 @@ Qué hace:
 - **Next move**: un panel según el estado de la ronda dice qué hacer ahora (unirse,
   invitar, bloquear, operar, liquidar), con enlace de invitación `?arena=<pubkey>`
   que abre la misma mesa al invitado.
+- **Guía interactiva**: tour de 4 pasos en el lobby y de 4–5 en la arena (según el
+  estado) que resalta el elemento, explica qué hacer y por qué, con `? guide` para
+  repetirlo. Se guarda en `localStorage` para no molestar dos veces.
+- **Movimiento**: transición entre rutas, entrada escalonada de tarjetas y paneles,
+  reveals al hacer scroll en la landing y feedback en botones; todo respeta
+  `prefers-reduced-motion`.
 - **Ticket**: LONG / SHORT con leverage 1–5×, ejecutado en el ER (gasless), con la
   barra de presión y la línea de delirio cuando el asiento está en fiebre.
 - **Ciclo completo desde la UI**: join → lock → delegate → trade → end round →

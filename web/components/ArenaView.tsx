@@ -31,6 +31,7 @@ import {
 } from "@/lib/pit";
 import Link from "next/link";
 import { CountdownRing, EquityBar, Sparkline, handleOf, madLine, thump } from "@/components/Bits";
+import Guide, { type GuideStep } from "@/components/Guide";
 import type { Wallet } from "@/lib/wallet";
 import { requestAirdrop } from "@/lib/wallet";
 
@@ -59,6 +60,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   // The notice is an acknowledgement, not a banner: it dismisses itself.
   useEffect(() => {
@@ -235,6 +237,71 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       setError(`copy failed — the invite link is ${shareUrl}`);
     }
   };
+
+  const guideSteps: GuideStep[] = [
+    {
+      target: '[data-guide="pot"]',
+      title: "The pot",
+      body: `Every seat paid the same entry (${fmtSol(entrySol, 3)} SOL) and it all sits in one escrow vault. The podium splits it 60 / 25 / 15.`,
+      why:
+        "The vault is a program-owned PDA. Settlement is a CPI from that account, so neither the host nor the winner can move the pot by hand.",
+    },
+    {
+      target: '[data-guide="nextstep"]',
+      title: "What to do right now",
+      body:
+        status === "open"
+          ? "This panel always tells you the next move: join, invite the second player, lock. It changes with every state of the round."
+          : status === "live"
+            ? "This panel tells you what the round expects from you: trade, watch the bite, close before the bell."
+            : "This panel walks the payout: commit the state back to Solana, then settle the podium.",
+      why:
+        "A round has four states on-chain — open, live, settled, closed — and each one allows different instructions. Guessing is how people lose money.",
+    },
+    {
+      target: '[data-guide="board"]',
+      title: "The leaderboard",
+      body:
+        "Your own PnL is marked to market. Everybody else shows “hidden” until the bell — that is the sealed book, not a bug.",
+      why:
+        "With the arena sealed inside the enclave, a wallet outside the permission gets null for the whole account, token or not. Your positions are private on-chain.",
+    },
+    {
+      target: '[data-guide="ticket"]',
+      title: "The ticket",
+      body:
+        "Pick LONG or SHORT, choose 1–5× leverage and open. The order executes inside the MagicBlock rollup: ~10ms and no gas.",
+      why:
+        "Trades never touch the base layer while the round runs, so there is no fee and no block wait. The price comes from the oracle read inside the rollup.",
+    },
+    ...(status === "live"
+      ? [
+          {
+            target: '[data-guide="bite"]',
+            title: "The bite is coming",
+            body: `Every ${biteCooldown}s the pit force-closes one random player who is holding a position. This bar is the countdown.`,
+            why:
+              "The victim is drawn by the VRF oracle and the callback is identity-checked on-chain. Staying flat is a real defense: the pit only bites players with risk open.",
+          },
+        ]
+      : []),
+    {
+      target: '[data-guide="actions"]',
+      title: "Lifecycle controls",
+      body:
+        "Join → lock → delegate → trade → end round → commit → settle. Each button is one real transaction, and anyone can push the permissionless ones.",
+      why:
+        "Delegate goes to the base layer, everything that touches the delegated arena goes to the rollup, and settle goes back to base. That layer rule is what makes it cheap and still final.",
+    },
+  ].filter((s) => s.target !== '[data-guide="actions"]' || isCreator || status !== "open");
+
+  // First visit: open the arena tour once the table has rendered.
+  useEffect(() => {
+    if (!arena) return;
+    if (window.localStorage.getItem("pit:guide:arena")) return;
+    const t = window.setTimeout(() => setGuideOpen(true), 1500);
+    return () => window.clearTimeout(t);
+  }, [arena?.publicKey.toBase58()]);
 
 
   const run = async (label: string, fn: () => Promise<string>) => {
@@ -485,6 +552,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           </Link>
         </div>
         <div className="wallet-box">
+          <button className="help-btn" onClick={() => setGuideOpen(true)} title="Replay the guided tour">
+            ? guide
+          </button>
           <span className="pill">
             <span className={`dot ${delegated ? "" : "warn"}`} />
             {!delegated
@@ -505,7 +575,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       </div>
 
       <div className="arena-head">
-        <div className="stat">
+        <div className="stat" data-guide="pot">
           <div className="stat-label">Pot</div>
           <div className="stat-value">{fmtSol(potSol)} SOL</div>
           <div className="stat-sub">
@@ -567,7 +637,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       </div>
 
       {status === "open" && (
-        <div className="nextstep">
+        <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
             <span className="nextstep-title">Your next move</span>
             <span className="pill mono">
@@ -640,7 +710,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       )}
 
       {status === "live" && (
-        <div className="nextstep">
+        <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
             <span className="nextstep-title">The clock is running</span>
             <span className="pill mono">{fmtClock(remaining)} left</span>
@@ -667,7 +737,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       )}
 
       {status === "settled" && (
-        <div className="nextstep">
+        <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
             <span className="nextstep-title">Round closed</span>
             <span className="pill mono">payout pending</span>
@@ -691,7 +761,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       )}
 
       {status === "closed" && (
-        <div className="nextstep">
+        <div className="nextstep" data-guide="nextstep">
           <div className="nextstep-head">
             <span className="nextstep-title">Round paid</span>
             <span className="pill mono">{arena.playerCount} seats</span>
@@ -706,7 +776,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       )}
 
       {status === "live" && delegated && (
-        <div className={`danger ${nextBiteIn <= 0 ? "ready" : nextBiteIn <= 5 ? "soon" : ""}`}>
+        <div className={`danger ${nextBiteIn <= 0 ? "ready" : nextBiteIn <= 5 ? "soon" : ""}`} data-guide="bite">
           <span className="danger-label">next bite</span>
           <span className="danger-count mono">{nextBiteIn > 0 ? fmtClock(nextBiteIn) : "READY"}</span>
           <span className="danger-note">
@@ -765,7 +835,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       )}
 
       <div className="cols">
-        <div className={`panel ${sealed ? "sealed" : ""}`}>
+        <div className={`panel ${sealed ? "sealed" : ""}`} data-guide="board">
           <div className="panel-head">
             <span>Leaderboard</span>
             <span>
@@ -831,7 +901,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           </div>
         </div>
 
-        <div className="panel">
+        <div className="panel" data-guide="ticket">
           <div className="panel-head">
             <span>{status === "live" ? "Trade ticket" : "Status"}</span>
             <span>{status === "live" ? "gasless" : ""}</span>
@@ -935,7 +1005,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           </div>
 
           {/* Host / lifecycle controls */}
-          <div className="actions">
+          <div className="actions" data-guide="actions">
             {status === "open" && isCreator && (
               <button className="btn ghost" disabled={busy !== null || arena.playerCount < 2} onClick={lock}>
                 {busy === "lock" ? "locking…" : arena.playerCount < 2 ? "need 2+ players" : "Lock & start round"}
@@ -1002,6 +1072,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           ? " The book is sealed inside the enclave (PER): a wallet outside the permission gets null for this account, token or not."
           : " Positions are hidden in this UI while the round runs; seal the pit to make them unreadable on-chain too."}
       </div>
+
+      <Guide
+        steps={guideSteps}
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        storageKey="pit:guide:arena"
+      />
     </div>
   );
 }

@@ -20,6 +20,7 @@ html,
 body {
   padding: 0;
   margin: 0;
+  overflow-x: clip;
   background: var(--bg);
   color: var(--text);
   font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
@@ -1776,4 +1777,356 @@ a.brand-text {
     flex-wrap: wrap;
     justify-content: flex-end;
   }
+}
+
+/* ============================== motion =================================== */
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-enter {
+  animation: page-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.55s ease,
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+.card {
+  animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.22s ease;
+}
+
+.card:active {
+  transform: translateY(0) scale(0.994);
+}
+
+.panel,
+.stat {
+  animation: rise 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.btn {
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.2s ease,
+    opacity 0.15s ease,
+    background 0.15s ease;
+}
+
+.btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 26px -16px rgba(255, 176, 32, 0.65);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.pill,
+.copy,
+.backlink,
+.tag {
+  transition:
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.copy:hover,
+.backlink:hover {
+  color: var(--text);
+}
+
+.land-nav-links a:not(.btn) {
+  position: relative;
+}
+
+.land-nav-links a:not(.btn)::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -4px;
+  height: 1px;
+  background: var(--amber);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.22s ease;
+}
+
+.land-nav-links a:not(.btn):hover::after {
+  transform: scaleX(1);
+}
+
+.nextstep {
+  animation: pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.help-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid rgba(255, 176, 32, 0.35);
+  color: var(--amber);
+  border-radius: 999px;
+  padding: 6px 11px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background 0.16s ease,
+    transform 0.16s ease;
+}
+
+.help-btn:hover {
+  background: rgba(255, 176, 32, 0.1);
+  transform: translateY(-1px);
+}
+
+/* =============================== guide =================================== */
+
+.guide-root {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.guide-veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 9, 0.78);
+  animation: page-in 0.2s ease both;
+}
+
+.guide-hole {
+  position: fixed;
+  z-index: 1;
+  border: 2px solid var(--amber);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 9999px rgba(4, 6, 9, 0.78),
+    0 0 32px rgba(255, 176, 32, 0.35);
+  pointer-events: none;
+  transition:
+    top 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    left 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.guide-card {
+  position: fixed;
+  z-index: 2;
+  background: #0f1217;
+  border: 1px solid rgba(255, 176, 32, 0.38);
+  border-radius: 14px;
+  padding: 16px 18px 14px;
+  box-shadow: 0 34px 70px -24px rgba(0, 0, 0, 0.95);
+  animation: pop 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.guide-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.guide-step {
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--amber);
+  font-weight: 800;
+}
+
+.guide-skip {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 11.5px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+}
+
+.guide-skip:hover {
+  color: var(--text);
+}
+
+.guide-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+
+.guide-body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #d6dde7;
+}
+
+.guide-why {
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+  border-left: 2px solid rgba(255, 176, 32, 0.45);
+  padding-left: 10px;
+}
+
+.guide-why b {
+  color: var(--amber);
+}
+
+.guide-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.guide-back,
+.guide-next {
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 9px 14px;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--text);
+  transition:
+    transform 0.12s ease,
+    opacity 0.15s ease,
+    background 0.15s ease;
+}
+
+.guide-back:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.guide-next {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: #1a1204;
+}
+
+.guide-next:hover {
+  transform: translateY(-1px);
+}
+
+.guide-dots {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.guide-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #313a46;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.guide-dot.on {
+  background: var(--amber);
+  transform: scale(1.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .guide-hole {
+    transition: none;
+  }
+}
+
+/* Staggered entrance for the arena cards. */
+.card:nth-child(1) { animation-delay: 0ms; }
+.card:nth-child(2) { animation-delay: 45ms; }
+.card:nth-child(3) { animation-delay: 90ms; }
+.card:nth-child(4) { animation-delay: 135ms; }
+.card:nth-child(5) { animation-delay: 180ms; }
+.card:nth-child(6) { animation-delay: 225ms; }
+.card:nth-child(7) { animation-delay: 270ms; }
+.card:nth-child(8) { animation-delay: 315ms; }
+.card:nth-child(n + 9) { animation-delay: 360ms; }
+
+/* Landing sections fade in as they scroll (Chrome/Edge; harmless elsewhere). */
+@supports (animation-timeline: view()) {
+  .land-section,
+  .land-final {
+    animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 32%;
+  }
+}
+
+.actions:empty {
+  display: none;
 }

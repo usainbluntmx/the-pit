@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import Link from "next/link";
 import ArenaView from "@/components/ArenaView";
+import Guide, { type GuideStep } from "@/components/Guide";
 import { handleOf } from "@/components/Bits";
 import {
   Arena,
@@ -75,6 +76,42 @@ export default function Home() {
   const [seriesMode, setSeriesMode] = useState(false);
   const [seriesList, setSeriesList] = useState<SeriesAccount[]>([]);
   const [maxPlayers, setMaxPlayers] = useState(8);
+  const [guideOpen, setGuideOpen] = useState(false);
+
+  const guideSteps: GuideStep[] = [
+    {
+      target: '[data-guide="wallet"]',
+      title: "This is your wallet",
+      body:
+        "Connect Phantom, Solflare or Backpack. The address and the SOL balance on the right are yours — the app never creates one for you.",
+      why:
+        "Nothing is custodial: every transaction is signed inside your extension and the enclave token is signed the same way. If the balance is low, the airdrop button appears right here.",
+    },
+    {
+      target: '[data-guide="arenas"]',
+      title: "The board",
+      body:
+        "OPEN means seats are available, LIVE means the round is already running on the rollup, CLOSED means the pot was paid out.",
+      why:
+        "The list merges the Solana base layer with the three devnet rollups: a delegated arena disappears from the base scan, so a single source would hide every live round.",
+    },
+    {
+      target: '[data-guide="arena-card"]',
+      title: "Enter a table",
+      body:
+        "Click a card to open that arena. The URL turns into /play?arena=… so you can send the exact table to another player.",
+      why:
+        "A round cannot start alone: it needs two seats. The invite link is how the second wallet gets in.",
+    },
+    {
+      target: '[data-guide="host"]',
+      title: "Host your own arena",
+      body:
+        "Choose entry fee, round length and seats, then create. As the host you lock the arena once at least two players are seated.",
+      why:
+        "The entry fee goes into an escrow vault owned by the program, not by you. The host can start the clock but can never touch the pot.",
+    },
+  ];
 
   const base = useMemo(() => baseConnection(), []);
 
@@ -95,6 +132,10 @@ export default function Home() {
     reconnectWallet().then((w) => {
       if (w) setWallet(w);
     });
+    // First visit: walk the user through the board once.
+    if (!window.localStorage.getItem("pit:guide:lobby")) {
+      window.setTimeout(() => setGuideOpen(true), 1100);
+    }
     return () => window.clearTimeout(t);
   }, []);
 
@@ -251,7 +292,10 @@ export default function Home() {
           </div>
         </Link>
         {wallet ? (
-          <div className="wallet-box">
+          <div className="wallet-box" data-guide="wallet">
+            <button className="help-btn" onClick={() => setGuideOpen(true)} title="Replay the guided tour">
+              ? guide
+            </button>
             <span className="pill mono">{balance.toFixed(3)} SOL</span>
             <span className="pill mono">{shortKey(wallet.publicKey)}</span>
             <button
@@ -269,7 +313,10 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className="wallet-box">
+          <div className="wallet-box" data-guide="wallet">
+            <button className="help-btn" onClick={() => setGuideOpen(true)} title="Start the guided tour">
+              ? guide
+            </button>
             <button className="btn" onClick={() => setPicking(true)}>
               Connect wallet
             </button>
@@ -351,7 +398,7 @@ export default function Home() {
       {error && <div className="err">{error}</div>}
       {notice && <div className="ok">{notice}</div>}
 
-      <div className="grid">
+      <div className="grid" data-guide="arenas">
         {arenas.length === 0 && (
           <div className="empty" style={{ gridColumn: "1 / -1" }}>
             no public arenas on the board right now. Hosted arenas appear here once they settle on base.
@@ -360,7 +407,12 @@ export default function Home() {
         {arenas.map((a) => {
           const st = statusOf(a);
           return (
-            <div className="card" key={a.publicKey.toBase58()} onClick={() => openArena(a.publicKey)}>
+            <div
+              className="card"
+              key={a.publicKey.toBase58()}
+              data-guide="arena-card"
+              onClick={() => openArena(a.publicKey)}
+            >
               <div className="card-top">
                 <span className={`tag ${st}`}>{st}</span>
                 <span className="mono" style={{ fontSize: 11, color: "var(--dim)" }}>
@@ -441,7 +493,7 @@ export default function Home() {
         </div>
       )}
 
-      <div className="panel" style={{ marginTop: 22 }}>
+      <div className="panel" style={{ marginTop: 22 }} data-guide="host">
         <div className="panel-head">
           <span>Host an arena</span>
           <span>base layer</span>
@@ -515,6 +567,13 @@ export default function Home() {
           : "Connect a Solana wallet to play. Nothing is custodial: the app never sees your keys. Program: "}
         <span className="mono">4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar</span>.
       </div>
+
+      <Guide
+        steps={guideSteps}
+        open={guideOpen}
+        onClose={() => setGuideOpen(false)}
+        storageKey="pit:guide:lobby"
+      />
     </div>
   );
 }
