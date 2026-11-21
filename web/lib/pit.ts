@@ -24,11 +24,32 @@ export const DELEGATION_PROGRAM_ID = new PublicKey(
 /** MagicBlock price feed accounts on devnet (PDA ["price_feed","pyth-lazer",<id>]). */
 export const FEEDS: Record<string, { name: string; address: PublicKey; decimals: number }> = {
   SOL: {
-    name: "SOL/USD",
+    name: "SOL / USD",
     address: new PublicKey("ENYwebBThHzmzwPLAQvCucUTsjyfBSZdD9ViXksS4jPu"),
     decimals: 8,
   },
+  BTC: {
+    name: "BTC / USD",
+    address: new PublicKey("71wtTRDY8Gxgw56bXFt2oc6qeAbTxzStdNiC425Z51sr"),
+    decimals: 8,
+  },
+  ETH: {
+    name: "ETH / USD",
+    address: new PublicKey("5vaYr1hpv8yrSpu8w3K95x22byYxUJCCNCSYJtqVWPvG"),
+    decimals: 8,
+  },
 };
+
+export const FEED_KEYS = Object.keys(FEEDS);
+
+/** Human name of the market an arena trades, from the feed recorded on-chain. */
+export function feedNameOf(feed: PublicKey | string): string {
+  const address = typeof feed === "string" ? feed : feed.toBase58();
+  for (const key of FEED_KEYS) {
+    if (FEEDS[key].address.toBase58() === address) return FEEDS[key].name;
+  }
+  return "CUSTOM / USD";
+}
 
 export const FIXED = 1_000_000_000;
 export const ARENA_ACCOUNT_SIZE = 982;

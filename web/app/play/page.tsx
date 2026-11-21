@@ -12,6 +12,8 @@ import {
   fetchSeries,
   knownSeries,
   FEEDS,
+  FEED_KEYS,
+  feedNameOf,
   baseConnection,
   buildCreateArena,
   fmtSol,
@@ -76,6 +78,7 @@ export default function Home() {
   const [seriesMode, setSeriesMode] = useState(false);
   const [seriesList, setSeriesList] = useState<SeriesAccount[]>([]);
   const [maxPlayers, setMaxPlayers] = useState(8);
+  const [asset, setAsset] = useState("SOL");
   const [guideOpen, setGuideOpen] = useState(false);
 
   const guideSteps: GuideStep[] = [
@@ -236,7 +239,7 @@ export default function Home() {
         durationSecs: duration,
         maxPlayers,
         rakeBps: 0,
-        feed: FEEDS.SOL.address,
+        feed: FEEDS[asset].address,
         creator: wallet.publicKey,
       });
       let seriesKey: PublicKey | null = null;
@@ -425,7 +428,7 @@ export default function Home() {
                   {a.playerCount}/{a.maxPlayers} players
                 </span>
                 <span>{a.duration.toString()}s</span>
-                <span>winners {a.winnerCount || 3}</span>
+                <span>{feedNameOf(a.feed)}</span>
               </div>
               <div className="card-foot">
                 <span>entry {fmtSol(sol(a.entryFee), 3)} SOL</span>
@@ -498,7 +501,14 @@ export default function Home() {
           <span>Host an arena</span>
           <span>base layer</span>
         </div>
-        <div style={{ padding: 16, display: "grid", gap: 14, gridTemplateColumns: "repeat(3, 1fr)" }}>
+        <div
+          style={{
+            padding: 16,
+            display: "grid",
+            gap: 14,
+            gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+          }}
+        >
           <label className="field" style={{ margin: 0 }}>
             <div className="field-label">
               <span>Entry fee (SOL)</span>
@@ -537,6 +547,22 @@ export default function Home() {
               onChange={(e) => setMaxPlayers(Number(e.target.value))}
               style={inputStyle}
             />
+          </label>
+          <label className="field" style={{ margin: 0 }}>
+            <div className="field-label">
+              <span>Market</span>
+            </div>
+            <select
+              value={asset}
+              onChange={(e) => setAsset(e.target.value)}
+              style={{ ...inputStyle, cursor: "pointer" }}
+            >
+              {FEED_KEYS.map((key) => (
+                <option key={key} value={key} style={{ background: "var(--panel-2)" }}>
+                  {FEEDS[key].name}
+                </option>
+              ))}
+            </select>
           </label>
         </div>
         <div style={{ padding: "0 0 14px" }}>

@@ -149,6 +149,9 @@ Qué hace:
 - **Movimiento**: transición entre rutas, entrada escalonada de tarjetas y paneles,
   reveals al hacer scroll en la landing y feedback en botones; todo respeta
   `prefers-reduced-motion`.
+- **Host an arena**: entrada, duración, asientos y **mercado** (SOL / BTC / ETH, cada
+  uno con su feed de Pyth Lazer). El feed queda grabado en la cuenta y define el
+  precio de toda la ronda.
 - **Ticket**: LONG / SHORT con leverage 1–5×, ejecutado en el ER (gasless), con la
   barra de presión y la línea de delirio cuando el asiento está en fiebre.
 - **Ciclo completo desde la UI**: join → lock → delegate → trade → end round →
@@ -166,6 +169,12 @@ Bots para llenar la arena en la demo (keypairs deterministas por `SEED`):
 ```bash
 ARENA=<pubkey> BOTS=3 SEED=7 npx tsx scripts/bots.ts join
 ARENA=<pubkey> BOTS=3 SEED=7 npx tsx scripts/bots.ts trade
+```
+
+Arena suelta con un mercado concreto, para probar feeds sin la UI:
+
+```bash
+npx tsx scripts/create-arena.ts BTC     # SOL | BTC | ETH
 ```
 
 Capturas del flujo real en `docs/screens/` (landing, lobby, arena, mordida, fiebre,

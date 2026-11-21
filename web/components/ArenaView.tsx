@@ -10,6 +10,7 @@ import {
   FIXED,
   fetchSeries,
   type SeriesAccount,
+  feedNameOf,
   TEE_VALIDATOR,
   baseConnection,
   erConnection,
@@ -179,8 +180,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       setArena(a);
       await loadSeries(a.series);
       setErUrl(null);
-      const p = await readPrice(base, a.feed).catch(() => null);
-      setPrice(p);
+      // The feed only publishes inside the rollup: on the base layer the account is
+      // delegated and stale, so reading it here would show an old price as if it were live.
+      setPrice(null);
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
@@ -609,7 +611,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           </div>
         </div>
         <div className="stat">
-          <div className="stat-label">SOL / USD</div>
+          <div className="stat-label">{feedNameOf(arena.feed)}</div>
           <div className="stat-value">
             {price ? (
               `$${price.toFixed(3)}`
