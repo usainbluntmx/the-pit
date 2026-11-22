@@ -111,5 +111,4 @@ sirven para jugar. Sin ER no hay juego, y sin TEE el libro sería público.
 
 ## Equipo
 
-Ricardo Fuentes — Zero Two Labs (CDMX). Full stack / blockchain. Solana LATAM (Atlas),
-2.º ETH México (Pay 'n Go).
+Ricardo Fuentes - Zero Two Labs (Mexico)
