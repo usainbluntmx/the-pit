@@ -692,4 +692,4 @@ Publicación:
 ## Equipo
 
 Ricardo Fuentes — Zero Two Labs (CDMX). Full stack / blockchain. Solana LATAM (Atlas),
-3.º Monad Blitz (Nodemesh), 2.º ETH México (Pay 'n Go).
+2.º ETH México (Pay 'n Go).

@@ -112,4 +112,4 @@ sirven para jugar. Sin ER no hay juego, y sin TEE el libro sería público.
 ## Equipo
 
 Ricardo Fuentes — Zero Two Labs (CDMX). Full stack / blockchain. Solana LATAM (Atlas),
-3.º Monad Blitz (Nodemesh), 2.º ETH México (Pay 'n Go).
+2.º ETH México (Pay 'n Go).
