@@ -32,7 +32,9 @@ three rounds with on-chain points. A lone player can run a **solo arena** agains
 one seat, the same entry, and a house PDA that pays up to 3× the entry if the run beats 1,000
 credits (and keeps it if it does not). The app also derives a disposable **trading account** in
 the browser, funded by a devnet faucet, so the main wallet signs once and orders never pop the
-extension again. Everything is permissionless and verifiable: the frontend is just a client.
+extension again. A full-width feed chart runs on the round clock and pins every long/short
+entry at its exact price, with a green or red band that shows at a glance whether the position
+was right. Everything is permissionless and verifiable: the frontend is just a client.
 
 ## Categoría
 
@@ -92,7 +94,9 @@ sirven para jugar. Sin ER no hay juego, y sin TEE el libro sería público.
 3. Crea una arena (o entra a una abierta) y comparte el link de invitación: hacen falta **dos**
    wallets para arrancar; no hay bots que se unan solos.
 4. Al bloquear, la arena se delega, arranca el reloj y se puede operar. La mordida se dispara
-   sola cuando vence el cooldown.
+   sola cuando vence el cooldown. La gráfica del feed ocupa el ancho completo, avanza con el
+   reloj de la ronda y clava cada entrada LONG/SHORT en su precio, con la banda verde o roja
+   que dice si esa posición va ganando o perdiendo.
 5. Al cerrar la ronda: `end_round` → `commit` → `settle` desde la misma UI.
 
 ## Estado y siguientes pasos
@@ -102,6 +106,8 @@ sirven para jugar. Sin ER no hay juego, y sin TEE el libro sería público.
 - [x] Deploy público + repo abierto + video demo
 - [x] Modo solitario contra el mercado (`settle_solo`, casa PDA, 4 tests)
 - [x] Trading account con fondeo de la app y retiro a la wallet principal
+- [x] Modo solo visible desde el lobby y la landing (`/play?mode=solo`)
+- [x] Gráfica del feed en grande con el punto de entrada de cada posición
 
 ## Equipo
 

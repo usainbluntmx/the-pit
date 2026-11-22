@@ -242,4 +242,12 @@ export const ES_UI: Record<string, string> = {
     "Unirse → bloquear → delegar → operar → cerrar ronda → commit → liquidar. Cada botón es una transacción real y cualquiera puede empujar las que no piden permiso.",
   "Delegate goes to the base layer, everything that touches the delegated arena goes to the rollup, and settle goes back to base. That layer rule is what makes it cheap and still final.":
     "Delegate va a la capa base, todo lo que toca la arena delegada va al rollup y settle vuelve a base. Esa regla de capas es lo que lo hace barato y aun así final.",
+  "The feed": "El feed",
+  "this round": "esta ronda",
+  "entry": "entrada",
+  "{side} entry @ {price}{approx}": "entrada {side} @ {price}{approx}",
+  "positions revealed at the bell": "posiciones reveladas al campanazo",
+  "one seat, no rival book to hide": "un asiento: no hay libro rival que esconder",
+  "your entry is drawn · rivals stay sealed until the bell":
+    "tu entrada se dibuja · los rivales siguen sellados hasta el campanazo",
 };

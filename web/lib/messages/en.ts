@@ -30,6 +30,7 @@ export const en = {
     lede:
       "Trading competitions on Solana where everyone starts with the same bankroll and a shared clock. Trades settle in a MagicBlock rollup — gasless, 10ms — the book stays sealed inside an enclave until the bell, and every few seconds the pit force-closes one random player who is holding risk. Top three split the escrow.",
     ctaPrimary: "Enter an arena",
+    ctaSolo: "Play solo",
     ctaGhost: "See the loop",
     stats: [
       { v: "10ms", l: "trade latency on the rollup" },
@@ -201,12 +202,21 @@ export const en = {
     modeLabel: "Mode",
     modeArena: "Arena · 2–8 players",
     modeSolo: "Solo · against the market",
+    modeArenaHint:
+      "Two to eight wallets, one escrow, three paid seats. The podium splits the pot 60/25/15.",
+    modeArenaMeta: "2–8 players · invite a rival",
+    modeSoloHint:
+      "One seat against the market. The house pays up to 3× your entry if you beat 1,000 credits, and keeps it if you do not.",
+    modeSoloMeta: "1 seat · no invite needed · up to 3×",
+    playSolo: "Play solo · against the market",
+    playArena: "Browse open arenas",
     soloBadge: "solo",
     hostHintSolo:
       "A solo run has one seat: you against the Pyth feed. The house PDA is the counterparty — it pays up to 3× your entry if you beat the market, and keeps it if you end below 1,000 credits. You still need to lock the arena to start the clock.",
     seriesToggle: "Series · 3 rounds, cumulative points",
     singleToggle: "Single round",
     create: "Create arena",
+    createSolo: "Create solo run",
     creating: "creating…",
     hostHint:
       "The arena is a PDA on Solana. Joining pays the entry fee into a vault; locking delegates the account to a MagicBlock rollup where trades cost nothing. Arenas fill with real wallets only — no bots join on their own, so invite a second player before locking.",

@@ -44,6 +44,9 @@ export default function Landing() {
           <Link className="btn" href="/play">
             {c.hero.ctaPrimary}
           </Link>
+          <Link className="btn ghost" href="/play?mode=solo">
+            {c.hero.ctaSolo}
+          </Link>
           <a className="btn ghost" href="#how">
             {c.hero.ctaGhost}
           </a>

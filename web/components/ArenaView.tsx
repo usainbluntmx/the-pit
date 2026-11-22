@@ -34,7 +34,8 @@ import {
   waitFor,
 } from "@/lib/pit";
 import Link from "next/link";
-import { CountdownRing, EquityBar, Sparkline, handleOf, madLine, thump } from "@/components/Bits";
+import { CountdownRing, EquityBar, handleOf, madLine, thump } from "@/components/Bits";
+import { PriceChart, fmtPrice, type FeedMark, type FeedPoint } from "@/components/PriceChart";
 import Guide, { type GuideStep } from "@/components/Guide";
 import { LangSwitch } from "@/components/LangSwitch";
 import type { Wallet } from "@/lib/wallet";
@@ -79,12 +80,17 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const [balance, setBalance] = useState<number>(0);
   const [tee, setTee] = useState<{ token: string; conn: Connection } | null>(null);
   const [sealed, setSealed] = useState(false);
-  const [history, setHistory] = useState<number[]>([]);
+  const [samples, setSamples] = useState<FeedPoint[]>([]);
+  const [entries, setEntries] = useState<
+    { seat: number; side: 1 | -1; price: number; t: number; approx: boolean }[]
+  >([]);
   const [events, setEvents] = useState<string[]>([]);
   const [kill, setKill] = useState<{ label: string; n: number; mine: boolean } | null>(null);
   const [series, setSeries] = useState<SeriesAccount | null>(null);
   const lastShockRef = useRef(-1);
   const crankRef = useRef(false);
+  const roundRef = useRef("");
+  const seatSnapRef = useRef<Map<number, { side: number; entry: number }>>(new Map());
 
   const base = useMemo(() => baseConnection(), []);
 
@@ -101,6 +107,39 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       }
     },
     [base],
+  );
+
+  /**
+   * One round = one chart. When the round key changes the line, the entry markers and
+   * the seat snapshot start over; a reload restores them from sessionStorage.
+   */
+  const restoreRound = useCallback(
+    (a: Arena) => {
+      const rk = `${a.roundNo}:${Number(a.startAt)}`;
+      if (roundRef.current === rk) return rk;
+      roundRef.current = rk;
+      seatSnapRef.current = new Map();
+      setEntries([]);
+      setSamples([]);
+      try {
+        const raw = window.sessionStorage.getItem(`pit:feed:${arenaPubkey.toBase58()}:${rk}`);
+        const parsed = raw ? JSON.parse(raw) : null;
+        const pts = Array.isArray(parsed) ? parsed : parsed?.pts;
+        const marks = Array.isArray(parsed) ? [] : parsed?.mk;
+        if (Array.isArray(pts)) {
+          setSamples(
+            pts
+              .filter((pt: any) => Number.isFinite(pt?.t) && Number.isFinite(pt?.p))
+              .slice(-1800),
+          );
+        }
+        if (Array.isArray(marks)) setEntries(marks.slice(-24));
+      } catch {
+        /* a broken cache never blocks the round */
+      }
+      return rk;
+    },
+    [arenaPubkey],
   );
 
   const load = useCallback(async () => {
@@ -129,9 +168,49 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
           const a = await fetchArena(conn, arenaPubkey);
           setArena(a);
+
+          // A round owns its price history: when the round changes, the chart starts over.
+          restoreRound(a);
+
           const live = await readPrice(conn, a.feed).catch(() => null);
           setPrice(live);
-          if (live) setHistory((h) => [...h.slice(-79), live]);
+          const ts = Math.floor(Date.now() / 1000);
+          if (live) {
+            setSamples((prev) => {
+              const last = prev[prev.length - 1];
+              if (last && last.t >= ts) return prev;
+              return [...prev, { t: ts, p: live }].slice(-1800);
+            });
+          }
+
+          // Entry markers: the program keeps the price of the open position, not its
+          // timestamp, so the exact moment is taken from the first poll that sees it.
+          const mine = a.seats
+            .slice(0, a.playerCount)
+            .findIndex((s) => s.player.equals(wallet.publicKey));
+          a.seats.slice(0, a.playerCount).forEach((seat, i) => {
+            const raw = seat as any;
+            const side = Number(raw.side);
+            const entry = Number(raw.entryPrice);
+            const before = seatSnapRef.current.get(i);
+            const holdingNow = statusOf(a) === "live" && side !== 0 && entry > 0;
+            const changed = !before || before.side !== side || before.entry !== entry;
+            if (i === mine && holdingNow && changed) {
+              setEntries((prev) =>
+                [
+                  ...prev,
+                  {
+                    seat: i,
+                    side: side > 0 ? (1 as const) : (-1 as const),
+                    price: entry,
+                    t: ts,
+                    approx: !before,
+                  },
+                ].slice(-24),
+              );
+            }
+            seatSnapRef.current.set(i, { side, entry });
+          });
 
           setSealed(!!(a as any).isPrivate);
           await loadSeries(a.series);
@@ -189,6 +268,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
       const a = await fetchArena(base, arenaPubkey);
       setArena(a);
+      restoreRound(a);
       await loadSeries(a.series);
       setErUrl(null);
       // The feed only publishes inside the rollup: on the base layer the account is
@@ -197,7 +277,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
-  }, [arenaPubkey, base, wallet, tee, t]);
+  }, [arenaPubkey, base, wallet, tee, t, restoreRound]);
 
   useEffect(() => {
     load();
@@ -212,6 +292,20 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       clearInterval(tick);
     };
   }, [load, base, wallet]);
+
+  // A reload in the middle of a round must not erase the line the player already saw.
+  useEffect(() => {
+    if (!arena || (samples.length === 0 && entries.length === 0)) return;
+    const rk = `${arena.roundNo}:${Number(arena.startAt)}`;
+    try {
+      window.sessionStorage.setItem(
+        `pit:feed:${arenaPubkey.toBase58()}:${rk}`,
+        JSON.stringify({ pts: samples.slice(-1800), mk: entries.slice(-24) }),
+      );
+    } catch {
+      /* private mode or a full quota: the chart still works in memory */
+    }
+  }, [samples, entries, arena, arenaPubkey]);
 
   const status = arena ? statusOf(arena) : "open";
   const nonce = arena ? nonceOf(arena) : "";
@@ -241,6 +335,22 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       : "";
   const needMore = arena ? (isSolo ? 0 : Math.max(0, 2 - arena.playerCount)) : 0;
   const entrySol = arena ? sol(arena.entryFee) : 0;
+
+  // Only the player's own entries are drawn while the round runs: the book is sealed
+  // for everyone else until the bell, and the chart should not leak it.
+  const myMarks: FeedMark[] = useMemo(
+    () =>
+      myIndex < 0
+        ? []
+        : entries
+            .filter((e) => e.seat === myIndex)
+            .map((e) => ({ side: e.side, price: e.price, t: e.t, approx: e.approx })),
+    [entries, myIndex],
+  );
+  const feedDelta =
+    samples.length > 1 && samples[0].p
+      ? ((samples[samples.length - 1].p - samples[0].p) / samples[0].p) * 100
+      : null;
 
   const copyInvite = async () => {
     try {
@@ -648,34 +758,78 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             })}
           </div>
         </div>
-        <div className="stat">
-          <div className="stat-label">{feedNameOf(arena.feed)}</div>
-          <div className="stat-value">
-            {price ? (
-              `$${price.toFixed(3)}`
+      </div>
+
+      <div className="panel feed-panel" data-guide="feed">
+        <div className="panel-head">
+          <span>
+            {t("The feed")} · {feedNameOf(arena.feed)}
+          </span>
+          <span className="feed-head-meta">
+            {sealed && <span className="pill">{t("sealed")}</span>}
+            {status === "live" ? (
+              <span className="live-chip">
+                <span className="dot" /> {t("live")}
+              </span>
             ) : (
-              <span style={{ fontSize: 15, fontWeight: 600, color: "var(--muted)" }}>
-                {t("waiting for the feed")}
+              <span>{c.status[status]}</span>
+            )}
+          </span>
+        </div>
+
+        <div className="feed-top">
+          <div>
+            {price !== null && (
+              <span className="feed-price mono">${fmtPrice(price)}</span>
+            )}
+            {feedDelta !== null && (
+              <span className={`feed-delta ${feedDelta >= 0 ? "up" : "down"}`}>
+                {feedDelta >= 0 ? "+" : ""}
+                {feedDelta.toFixed(2)}%
+                <small>{t("this round")}</small>
+              </span>
+            )}
+          </div>
+          <div className="feed-chips">
+            {mySeat && Number(mySeat.side) !== 0 && (
+              <span className={`feed-pos ${Number(mySeat.side) > 0 ? "long" : "short"}`}>
+                {Number(mySeat.side) > 0 ? t("LONG") : t("SHORT")} {leverage}× · {t("entry")} $
+                {fmtPrice(Number(mySeat.entryPrice))}
               </span>
             )}
             {status === "live" && (
-              <span className="live-chip" style={{ marginLeft: 9, verticalAlign: "middle" }}>
-                <span className="dot" /> {t("live")}
-              </span>
+              <span className="feed-clock mono">{fmtClock(remaining)}</span>
             )}
           </div>
-          <div className="spark">
-            <Sparkline
-              data={history}
-              positive={history.length < 2 || history[history.length - 1] >= history[0]}
-            />
-          </div>
-          <div className="stat-sub">
-            {price
-              ? t("MagicBlock price feed · 10ms")
-              : t("the feed publishes once the arena is on the rollup")}
-          </div>
         </div>
+
+        <PriceChart
+          points={samples}
+          marks={myMarks}
+          startAt={Number(arena.startAt)}
+          endAt={Number(arena.endAt)}
+          now={now}
+          price={price}
+          title={feedNameOf(arena.feed)}
+          waiting={t("waiting for the feed")}
+          waitingSub={t("the feed publishes once the arena is on the rollup")}
+          entryLabel={(sideNow, value, approx) =>
+            t("{side} entry @ {price}{approx}", {
+              side: sideNow === "long" ? t("LONG") : t("SHORT"),
+              price: value,
+              approx: approx ? " ~" : "",
+            })
+          }
+          sealedNote={
+            !price
+              ? ""
+              : revealed
+                ? t("positions revealed at the bell")
+                : isSolo
+                  ? t("one seat, no rival book to hide")
+                  : t("your entry is drawn · rivals stay sealed until the bell")
+          }
+        />
       </div>
 
       {status === "open" && (

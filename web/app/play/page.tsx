@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
 import Link from "next/link";
 import ArenaView from "@/components/ArenaView";
@@ -89,6 +89,7 @@ export default function Home() {
   const [solo, setSolo] = useState(false);
   const [asset, setAsset] = useState("SOL");
   const [guideOpen, setGuideOpen] = useState(false);
+  const hostRef = useRef<HTMLDivElement>(null);
   const { c } = useI18n();
 
   const guideSteps: GuideStep[] = [
@@ -127,6 +128,17 @@ export default function Home() {
       } catch {
         /* not a valid key — ignore the query string */
       }
+    }
+
+    // The landing sells the solo run with its own link: /play?mode=solo
+    if (new URLSearchParams(window.location.search).get("mode") === "solo") {
+      setSolo(true);
+      // The board arrives after the first RPC round-trip, so the panel moves down:
+      // scroll once the layout has settled, and again after the arena list renders.
+      const bring = () =>
+        hostRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(bring, 900);
+      window.setTimeout(bring, 2200);
     }
     // Extensions inject after hydration, so re-scan once the page is idle.
     const t = window.setTimeout(() => setWallets(detectWallets()), 900);
@@ -260,6 +272,15 @@ export default function Home() {
     setSelected(null);
   };
 
+  const startSolo = () => {
+    setSolo(true);
+    if (!wallet) setPicking(true);
+    window.setTimeout(
+      () => hostRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }),
+      350,
+    );
+  };
+
   const createArena = async () => {
     if (!wallet) {
       setPicking(true);
@@ -382,6 +403,22 @@ export default function Home() {
           {c.play.titleB} <em>{c.play.titleEm}</em>
         </h1>
         <p className="lede">{c.play.lede}</p>
+        <div className="play-cta">
+          <button type="button" className="btn" onClick={startSolo}>
+            {c.play.playSolo}
+          </button>
+          <button
+            type="button"
+            className="btn ghost"
+            onClick={() =>
+              document
+                .querySelector('[data-guide="arenas"]')
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          >
+            {c.play.playArena}
+          </button>
+        </div>
       </div>
 
       {picking && !wallet && (
@@ -591,10 +628,40 @@ export default function Home() {
         </div>
       )}
 
-      <div className="panel" style={{ marginTop: 22 }} data-guide="host">
+      <div className="panel" style={{ marginTop: 22 }} data-guide="host" ref={hostRef}>
         <div className="panel-head">
           <span>{c.play.hostTitle}</span>
           <span>{c.play.baseLayer}</span>
+        </div>
+        <div className="mode-pick" role="radiogroup" aria-label={c.play.modeLabel}>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={!solo}
+            className={`mode-card ${!solo ? "on" : ""}`}
+            onClick={() => setSolo(false)}
+          >
+            <span className="mc-top">
+              <span className="mc-title">{c.play.modeArena}</span>
+              <span className="mc-radio" aria-hidden />
+            </span>
+            <span className="mc-desc">{c.play.modeArenaHint}</span>
+            <span className="mc-meta">{c.play.modeArenaMeta}</span>
+          </button>
+          <button
+            type="button"
+            role="radio"
+            aria-checked={solo}
+            className={`mode-card ${solo ? "on" : ""}`}
+            onClick={() => setSolo(true)}
+          >
+            <span className="mc-top">
+              <span className="mc-title">{c.play.modeSolo}</span>
+              <span className="mc-radio" aria-hidden />
+            </span>
+            <span className="mc-desc">{c.play.modeSoloHint}</span>
+            <span className="mc-meta">{c.play.modeSoloMeta}</span>
+          </button>
         </div>
         <div
           style={{
@@ -604,23 +671,6 @@ export default function Home() {
             gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
           }}
         >
-          <label className="field" style={{ margin: 0 }}>
-            <div className="field-label">
-              <span>{c.play.modeLabel}</span>
-            </div>
-            <select
-              value={solo ? "solo" : "arena"}
-              onChange={(e) => setSolo(e.target.value === "solo")}
-              style={{ ...inputStyle, cursor: "pointer" }}
-            >
-              <option value="arena" style={{ background: "var(--panel-2)" }}>
-                {c.play.modeArena}
-              </option>
-              <option value="solo" style={{ background: "var(--panel-2)" }}>
-                {c.play.modeSolo}
-              </option>
-            </select>
-          </label>
           <label className="field" style={{ margin: 0 }}>
             <div className="field-label">
               <span>{c.play.entryFee}</span>
@@ -690,7 +740,7 @@ export default function Home() {
         </div>
         <div style={{ padding: "0 16px 16px" }}>
           <button className="btn" disabled={busy !== null} onClick={createArena}>
-            {busy === "create" ? c.play.creating : c.play.create}
+            {busy === "create" ? c.play.creating : solo ? c.play.createSolo : c.play.create}
           </button>
           <p className="hint">
             {solo ? c.play.hostHintSolo : c.play.hostHint}

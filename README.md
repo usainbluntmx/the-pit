@@ -468,6 +468,11 @@ Hecho y verificado con firmas en devnet:
 - [x] i18n ES/EN con switch persistente en landing, lobby y arena
 - [x] Modo solo contra el mercado (`settle_solo` + casa PDA, 4 tests en LiteSVM)
 - [x] Trading account con faucet propio (`/api/faucet`, firma de vinculación + rate limit)
+- [x] Gráfica del feed a pantalla completa: eje con el reloj de la ronda, línea en vivo y el
+  punto exacto de cada entrada LONG/SHORT con su precio, más la banda de ganancia/pérdida
+  contra la entrada vigente
+- [x] Modo solo visible desde el lobby y la landing: tarjetas de modo y enlace directo
+  `/play?mode=solo` (antes solo existía dentro de un desplegable)
 
 Pendiente para la submission del Blitz v10 (deadline 27 nov 2026, 15:00 CET):
 

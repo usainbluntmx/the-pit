@@ -32,6 +32,7 @@ export const es: Copy = {
     lede:
       "Competencias de trading en Solana donde todos arrancan con el mismo bankroll y el mismo reloj. Las órdenes se liquidan en un rollup de MagicBlock —sin gas, en 10 ms—, el libro queda sellado dentro de un enclave hasta el campanazo y cada pocos segundos el pozo saca a mercado a un jugador al azar que esté aguantando riesgo. Los tres primeros se reparten el escrow.",
     ctaPrimary: "Entrar a una arena",
+    ctaSolo: "Jugar solo",
     ctaGhost: "Ver el ciclo",
     stats: [
       { v: "10 ms", l: "latencia por orden en el rollup" },
@@ -203,12 +204,21 @@ export const es: Copy = {
     modeLabel: "Modo",
     modeArena: "Arena · 2–8 jugadores",
     modeSolo: "Solo · contra el mercado",
+    modeArenaHint:
+      "De dos a ocho wallets, un solo pozo y tres asientos pagados. El podio reparte 60/25/15.",
+    modeArenaMeta: "2–8 jugadores · invita a un rival",
+    modeSoloHint:
+      "Un asiento contra el mercado. La casa paga hasta 3× tu entrada si le ganas al mercado, y se la queda si terminas debajo de 1,000 créditos.",
+    modeSoloMeta: "1 asiento · sin invitación · hasta 3×",
+    playSolo: "Jugar solo · contra el mercado",
+    playArena: "Ver arenas abiertas",
     soloBadge: "solo",
     hostHintSolo:
       "Una corrida solo tiene un asiento: tú contra el feed de Pyth. La casa (PDA del programa) es la contraparte: paga hasta 3× tu entrada si le ganas al mercado, y se la queda si terminas debajo de 1,000 créditos. Igual hay que bloquear la arena para arrancar el reloj.",
     seriesToggle: "Serie · 3 rondas, puntos acumulados",
     singleToggle: "Ronda suelta",
     create: "Crear arena",
+    createSolo: "Crear corrida solo",
     creating: "creando…",
     hostHint:
       "La arena es una PDA en Solana. Unirse paga la entrada a un vault; bloquear delega la cuenta a un rollup de MagicBlock donde operar no cuesta nada. Las arenas se llenan solo con wallets reales: ningún bot entra por su cuenta, así que invita a un segundo jugador antes de bloquear.",
