@@ -137,6 +137,14 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       } catch {
         /* a broken cache never blocks the round */
       }
+      // Seed the snapshot with what the chain already holds: otherwise the first poll
+      // after a reload would look like a brand-new entry and duplicate the marker.
+      a.seats.slice(0, a.playerCount).forEach((seat, i) => {
+        seatSnapRef.current.set(i, {
+          side: Number((seat as any).side),
+          entry: Number((seat as any).entryPrice),
+        });
+      });
       return rk;
     },
     [arenaPubkey],
@@ -793,8 +801,8 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           <div className="feed-chips">
             {mySeat && Number(mySeat.side) !== 0 && (
               <span className={`feed-pos ${Number(mySeat.side) > 0 ? "long" : "short"}`}>
-                {Number(mySeat.side) > 0 ? t("LONG") : t("SHORT")} {leverage}× · {t("entry")} $
-                {fmtPrice(Number(mySeat.entryPrice))}
+                {Number(mySeat.side) > 0 ? t("LONG") : t("SHORT")} {leverageOf(mySeat)}× ·{" "}
+                {t("entry")} ${fmtPrice(Number(mySeat.entryPrice))}
               </span>
             )}
             {status === "live" && (
