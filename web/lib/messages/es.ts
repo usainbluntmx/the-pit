@@ -2,7 +2,7 @@ import type { Copy } from "./en";
 
 /**
  * Spanish copy (Mexico). Same shape as `en`, enforced by the `Copy` type.
- * Brand words stay: PIT, Blitz. Game nouns are translated consistently:
+ * Brand words stay: PIT. Game nouns are translated consistently:
  * bite = mordida, pot = pozo, seat = asiento, fever = fiebre, series = serie.
  */
 export const es: Copy = {
@@ -26,7 +26,7 @@ export const es: Copy = {
     play: "Jugar en devnet",
   },
   hero: {
-    kicker: "Entertainment finance · Blitz v10",
+    kicker: "Entertainment finance · juegos de trading",
     titleA: "El mercado",
     titleEm: "muerde de vuelta.",
     lede:
@@ -132,7 +132,7 @@ export const es: Copy = {
     program: "Leer el programa",
   },
   footer: {
-    built: "hecho para Solana Blitz v10 · entertainment finance",
+    built: "hecho con MagicBlock · entertainment finance",
   },
   status: {
     open: "abierta",

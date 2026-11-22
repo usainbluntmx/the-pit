@@ -24,7 +24,7 @@ export const en = {
     play: "Play on devnet",
   },
   hero: {
-    kicker: "Entertainment finance · Blitz v10",
+    kicker: "Entertainment finance · trading games",
     titleA: "The market",
     titleEm: "bites back.",
     lede:
@@ -130,7 +130,7 @@ export const en = {
     program: "Read the program",
   },
   footer: {
-    built: "built for Solana Blitz v10 · entertainment finance",
+    built: "built with MagicBlock · entertainment finance",
   },
   status: {
     open: "open",

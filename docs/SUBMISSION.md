@@ -1,6 +1,6 @@
-# Submission — Solana Blitz v10 (Entertainment Finance)
+# Submission — PIT (Entertainment Finance)
 
-Campos listos para copiar y pegar en `build.magicblock.app/?stage=blitz#submit`.
+Campos listos para copiar y pegar en el formulario de entrega.
 
 ## Nombre
 
@@ -45,7 +45,7 @@ Entertainment Finance · Trading / gaming · DeFi consumer
 - **App (devnet):** https://the-pit.zerotwolabs.xyz/
 - **App (respaldo estático):** https://usainbluntmx.github.io/the-pit/
 - **Repo:** https://github.com/usainbluntmx/the-pit
-- **Video (74 s, ES):** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo.mp4
+- **Video (70 s, ES):** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo.mp4
 - **Video sin voz:** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo-sin-voz.mp4
 - **Programa:** https://explorer.solana.com/address/4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar?cluster=devnet
 

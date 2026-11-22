@@ -1815,7 +1815,11 @@ a.brand-text {
 }
 
 .page-enter {
-  animation: page-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Sin `both`: al terminar, el elemento vuelve a `transform: none`. Con el
+     fill-mode activo quedaba una matriz identidad que convertía al wrapper en
+     containing block y el .grid-bg (fixed, inset -20%) alargaba el documento
+     unas 800 px de vacío al final de la landing. */
+  animation: page-in 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reveal {
