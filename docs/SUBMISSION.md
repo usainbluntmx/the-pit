@@ -42,7 +42,8 @@ Entertainment Finance · Trading / gaming · DeFi consumer
 
 ## Links
 
-- **App (devnet):** https://usainbluntmx.github.io/the-pit/
+- **App (devnet):** https://the-pit.zerotwolabs.xyz/
+- **App (respaldo estático):** https://usainbluntmx.github.io/the-pit/
 - **Repo:** https://github.com/usainbluntmx/the-pit
 - **Video (74 s, ES):** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo.mp4
 - **Video sin voz:** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo-sin-voz.mp4
@@ -52,7 +53,7 @@ Entertainment Finance · Trading / gaming · DeFi consumer
 
 - **Program ID:** `4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar`
 - **Upgrade authority:** `Dj9VvhrDUMtumbkiY9dZPZQczmJHAwDvrdLY6kHoUDNS`
-- **Binario:** 545,336 bytes, 17 instrucciones, Anchor 1.0.2 / Solana CLI 3.1.9
+- **Binario:** 545,336 bytes, 19 instrucciones, Anchor 1.0.2 / Solana CLI 3.1.9
 - **Arena liquidada con podio real:** `FCjiCWgQi3ZVpGEJa2SmtYyc4a3YxwZeEvM9ei1cFhgW`
   (3 asientos, pozo 0.03 SOL, pagos 60/25/15, estado `closed`)
 - **Arena en vivo / abierta:** `G6Qnx7x14BZkT1b7Lbzkge5n1EkazHtzxHzJiurbap2B`
