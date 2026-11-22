@@ -620,8 +620,10 @@ solana program close --buffers
 - Program ID: `4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar` (devnet)
 - Upgrade authority: `Dj9VvhrDUMtumbkiY9dZPZQczmJHAwDvrdLY6kHoUDNS` (`~/.config/solana/id.json`)
 - Binario: 545,336 bytes, 19 instrucciones en el IDL
-- Última arena verificada: `EwR4JaXswgkLaCPVpby25buXhRgDRLxn76S15AjY1Njp`
-  — 3 jugadores, pot 0.03 SOL, podio 1001.59 / 1000.62 / 998.22, payouts 60/25/15, status `closed`.
+- Arena verificada más reciente: `FCjiCWgQi3ZVpGEJa2SmtYyc4a3YxwZeEvM9ei1cFhgW`
+  — 3 jugadores, pot 0.03 SOL, pagos 60/25/15, status `closed` (20 nov, 08:14 UTC).
+- Primera corrida completa del runbook: `EwR4JaXswgkLaCPVpby25buXhRgDRLxn76S15AjY1Njp`
+  — 3 jugadores, pot 0.03 SOL, podio 1001.59 / 1000.62 / 998.22 (20 nov, 01:57 UTC).
 - Runbook completo probado el 2026-11-20: create → join ×3 → lock → delegate → open ×3 → close ×2 →
   end_round → commit+undelegate → settle, con ownership verificado en base, router y ER en cada transición.
 
