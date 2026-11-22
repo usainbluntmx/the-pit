@@ -10,244 +10,173 @@
  *
  * Placeholders use `{name}` and are replaced by `useT()`.
  */
+
 export const ES_UI: Record<string, string> = {
-  // ---- chrome / errors -----------------------------------------------------
   "← Back to lobby": "← Volver al lobby",
   "loading arena…": "cargando arena…",
   "← Lobby": "← Lobby",
-  "base layer": "capa base",
-  "PER · sealed": "PER · sellada",
-  "PER · open": "PER · abierta",
-  "series · R{n}/{max}": "serie · R{n}/{max}",
+  "on Solana": "en Solana",
+  "private · sealed": "privado · sellado",
+  "private · open": "privado · abierto",
+  "round {n}/{max}": "ronda {n}/{max}",
   "arena not found": "arena no encontrada",
-  "the arena is not delegated to a rollup": "la arena no está delegada a un rollup",
-  "TEE session not ready": "sesión TEE no lista",
+  "this table hasn't moved to the fast layer yet": "esta mesa todavía no pasa a la capa rápida",
+  "private session not ready yet": "la sesión privada todavía no está lista",
   "copy failed — the invite link is {link}": "no se pudo copiar; el link es {link}",
-
-  // ---- header stats --------------------------------------------------------
-  Pot: "Pozo",
-  "{count}/{max} seats · entry {entry} SOL": "{count}/{max} asientos · entrada {entry} SOL",
+  "Pot": "Pozo",
+  "{count}/{max} seats · {entry} SOL to enter": "{count}/{max} asientos · {entry} SOL la entrada",
   "1st": "1.º",
   "2nd": "2.º",
   "3rd": "3.º",
   "time left": "tiempo restante",
-  "starts on lock": "arranca al bloquear",
-  round: "ronda",
-  "{secs}s rounds · rake {rake}%": "rondas de {secs}s · rake {rake}%",
-  "waiting for the feed": "esperando el feed",
-  live: "en vivo",
-  "MagicBlock price feed · 10ms": "feed de precio de MagicBlock · 10 ms",
-  "the feed publishes once the arena is on the rollup":
-    "el feed publica cuando la arena está en el rollup",
-
-  // ---- next move: open -----------------------------------------------------
+  "starts when it's locked": "arranca al bloquearla",
+  "round": "ronda",
+  "{secs}s rounds · {rake}% fee": "rondas de {secs}s · {rake}% de comisión",
+  "waiting for prices": "esperando precios",
+  "live": "en vivo",
+  "live prices · 10 ms": "precios en vivo · 10 ms",
+  "prices start once the table moves to the fast layer": "los precios arrancan cuando la mesa pasa a la capa rápida",
   "Your next move": "Tu siguiente movimiento",
   "1 more player to start": "falta 1 jugador para arrancar",
   "{n} more players to start": "faltan {n} jugadores para arrancar",
   "ready to start": "listo para arrancar",
-  "Join for {amount} SOL and start with 1,000 credits":
-    "Únete por {amount} SOL y arranca con 1,000 créditos",
-  "You are in — the round cannot start alone": "Ya estás dentro: la ronda no puede arrancar solo",
-  "Everyone is in: lock the arena to start the clock":
-    "Ya están todos: bloquea la arena para arrancar el reloj",
-  "Everyone is in: waiting for the host to lock":
-    "Ya están todos: esperando que el anfitrión bloquee",
-  "Join: your entry goes into an escrow vault and the program opens your seat.":
-    "Únete: tu entrada va a un vault en escrow y el programa abre tu asiento.",
-  "You are seated and paid. Nothing else to deposit.":
-    "Ya tienes asiento y ya pagaste. No hay nada más que depositar.",
-  "A round needs **2 players**. Copy the invite link and send it — **no bots join by themselves**.":
-    "Una ronda necesita **2 jugadores**. Copia el link de invitación y mándalo: **ningún bot entra solo**.",
+  "Join for {amount} SOL and start with 1,000 credits": "Únete por {amount} SOL y arranca con 1,000 créditos",
+  "You're in — a round needs a second player": "Ya estás dentro: una ronda necesita un segundo jugador",
+  "Everyone's in: lock the table to start the clock": "Ya están todos: bloquea la mesa para arrancar el reloj",
+  "Everyone's in: waiting for the host to lock": "Ya están todos: esperando que el anfitrión bloquee",
+  "Joining puts your entry into the shared pot and opens your seat.": "Al unirte, tu entrada va al pozo compartido y se abre tu asiento.",
+  "You are seated and paid. Nothing else to deposit.": "Ya tienes asiento y ya pagaste. No hay nada más que depositar.",
+  "A round needs **2 players**. Copy the invite link and send it — **no bots join by themselves**.": "Una ronda necesita **2 jugadores**. Copia el link de invitación y mándalo: **ningún bot entra solo**.",
   "You lock it: ": "Tú la bloqueas: ",
   "The host locks it: ": "El anfitrión la bloquea: ",
-  "the arena delegates to MagicBlock, the clock starts and the book is sealed.":
-    "la arena se delega a MagicBlock, arranca el reloj y el libro queda sellado.",
+  "the table moves to the fast layer, the clock starts and your moves go private.": "la mesa pasa a la capa rápida, arranca el reloj y tus jugadas se vuelven privadas.",
   "joining…": "uniéndose…",
   "Join for {amount} SOL": "Unirse por {amount} SOL",
-  "Join for {amount} SOL and run against the market":
-    "Únete por {amount} SOL y corre contra el mercado",
-  "You are in — lock the arena to start the clock":
-    "Ya estás dentro: bloquea la arena para arrancar el reloj",
-  "This is a solo run: one seat, no invite. Lock it to start the clock.":
-    "Es una corrida solo: un asiento y sin invitación. Bloquéala para arrancar el reloj.",
-  "The market paid your run — start the next one":
-    "El mercado pagó tu corrida: arranca la siguiente",
-  "Solo run settled — start the next one":
-    "Corrida solo liquidada: arranca la siguiente",
-  "Round closed. The house paid your multiplier.":
-    "Ronda cerrada. La casa pagó tu multiplicador.",
+  "Join for {amount} SOL and run against the market": "Únete por {amount} SOL y corre contra el mercado",
+  "You are in — lock the arena to start the clock": "Ya estás dentro: bloquea la arena para arrancar el reloj",
+  "This is a solo run: one seat, no invite. Lock it to start the clock.": "Es una corrida solo: un asiento y sin invitación. Bloquéala para arrancar el reloj.",
+  "The market paid your run — start the next one": "El mercado pagó tu corrida: arranca la siguiente",
+  "Solo run paid out — start the next one": "Corrida solo pagada: arranca la siguiente",
+  "Round closed. The house paid your multiplier.": "Ronda cerrada. La casa pagó tu multiplicador.",
   "need 1 player": "falta 1 jugador",
   "Solo payout": "Pago solo",
-  "solo payout · 1.00× / 1.25× / 1.50× / 2.00× / 3.00×":
-    "pago solo · 1.00× / 1.25× / 1.50× / 2.00× / 3.00×",
-  "Settle: the house pays your multiplier out of the entry and its own balance.":
-    "Liquida: la casa paga tu multiplicador con la entrada y su propio saldo.",
+  "solo payout · 1.00× / 1.25× / 1.50× / 2.00× / 3.00×": "pago solo · 1.00× / 1.25× / 1.50× / 2.00× / 3.00×",
+  "Pay out: the house pays your multiplier from the entry and its own balance.": "Pagar: la casa paga tu multiplicador con la entrada y su propio saldo.",
   "locking…": "bloqueando…",
   "Lock & start round": "Bloquear y arrancar",
   "link copied ✓": "link copiado ✓",
   "Copy invite link": "Copiar link de invitación",
-  "Nobody joins automatically — this arena only fills with wallets you invite. The link opens it directly, so the other player lands on this same table.":
-    "Nadie entra automáticamente: esta arena solo se llena con wallets que tú invitas. El link la abre directo, así que el otro jugador cae en esta misma mesa.",
-  "You need {need} SOL to join and the wallet holds {have}.":
-    "Necesitas {need} SOL para unirte y la wallet tiene {have}.",
+  "Nobody joins automatically — this arena only fills with wallets you invite. The link opens it directly, so the other player lands on this same table.": "Nadie entra automáticamente: esta arena solo se llena con wallets que tú invitas. El link la abre directo, así que el otro jugador cae en esta misma mesa.",
+  "You need {need} SOL to join and the wallet holds {have}.": "Necesitas {need} SOL para unirte y la wallet tiene {have}.",
   "requesting…": "solicitando…",
   "Request 1 devnet SOL": "Pedir 1 SOL de devnet",
-
-  // ---- next move: live / settled / closed ---------------------------------
   "The clock is running": "El reloj corre",
   "{clock} left": "quedan {clock}",
-  "Trade from the ticket, then survive the bite": "Opera desde el ticket y sobrevive a la mordida",
-  "Pick LONG or SHORT, choose leverage and open a position — it settles in ~10ms, no fees.":
-    "Elige LONG o SHORT, escoge el leverage y abre una posición: se liquida en ~10 ms, sin comisiones.",
-  "Every {secs}s the pit force-closes one random player who is holding. Staying flat is a real defense.":
-    "Cada {secs}s el pozo cierra a mercado a un jugador al azar que tenga posición. Quedarse plano es una defensa real.",
-  "Close before the bell: the top three split the pot 60/25/15.":
-    "Cierra antes del campanazo: los tres primeros se reparten el pozo 60/25/15.",
+  "Trade from the ticket and survive the bite": "Opera desde el ticket y sobrevive a la mordida",
+  "Pick LONG or SHORT, choose 1–5× and open. It lands instantly and costs nothing.": "Elige LONG o SHORT, escoge 1–5× y abre. Entra al instante y no cuesta nada.",
+  "Every {secs}s the pit closes one random player who is holding. Staying out is a real defence.": "Cada {secs}s el pozo cierra a un jugador al azar que tenga posición. Quedarse fuera es una defensa real.",
+  "Close before the bell: the top three split the pot 60/25/15.": "Cierra antes del campanazo: los tres primeros se reparten el pozo 60/25/15.",
   "Round closed": "Ronda cerrada",
   "payout pending": "pago pendiente",
-  "Commit the round back to Solana, then settle the podium":
-    "Commitea la ronda de vuelta a Solana y luego liquida el podio",
-  "Commit & undelegate: the final state travels back from the rollup to the base layer.":
-    "Commit y undelegate: el estado final viaja del rollup a la capa base.",
-  "The arena is already back on the base layer.": "La arena ya está de vuelta en la capa base.",
-  "Settle: the escrow vault pays 60/25/15 to the top three, plus the last-one-standing bonus.":
-    "Liquida: el vault en escrow paga 60/25/15 a los tres primeros, más el bono de último en pie.",
+  "Save the round back to Solana, then pay the podium": "Guarda la ronda de vuelta en Solana y luego paga al podio",
+  "Save & return: the final state goes from the fast layer back to Solana.": "Guardar y volver: el estado final pasa de la capa rápida a Solana.",
+  "The table is already back on Solana.": "La mesa ya está de vuelta en Solana.",
+  "Pay out: the pot pays 60/25/15 to the top three, plus the last-one-standing bonus.": "Pagar: el pozo paga 60/25/15 a los tres primeros, más el bono de último en pie.",
   "Round paid": "Ronda pagada",
   "{n} seats": "{n} asientos",
-  "The podium took the pot — start the next one":
-    "El podio se llevó el pozo: arranca la siguiente",
+  "The podium took the pot — start the next one": "El podio se llevó el pozo: arranca la siguiente",
   "Back to the lobby": "Volver al lobby",
-
-  // ---- bite / fever / last standing --------------------------------------
   "next bite": "próxima mordida",
-  READY: "LISTA",
-  "{n} holding risk · the pit takes one at random":
-    "{n} con riesgo · el pozo se lleva a uno al azar",
-  "nobody is holding · the pit has nothing to bite":
-    "nadie tiene posición · el pozo no tiene a quién morder",
+  "READY": "LISTA",
+  "{n} holding risk · the pit takes one at random": "{n} con riesgo · el pozo se lleva a uno al azar",
+  "nobody is holding · the pit has nothing to bite": "nadie tiene posición · el pozo no tiene a quién morder",
   "last one standing": "último en pie",
-  you: "tú",
-  "held into the bell · +{amount} SOL off the top":
-    "aguantó hasta el campanazo · +{amount} SOL de la parte de arriba",
-  fever: "fiebre",
-  "{n}s · your orders execute inverted": "{n}s · tus órdenes se ejecutan invertidas",
+  "you": "tú",
+  "held into the bell · +{amount} SOL off the top": "aguantó hasta el campanazo · +{amount} SOL de la parte de arriba",
+  "fever": "fiebre",
+  "{n}s · your orders run backwards": "{n}s · tus órdenes corren al revés",
   "THE PIT BIT YOU": "EL POZO TE MORDIÓ",
   "THE PIT BIT {name}": "EL POZO MORDIÓ A {name}",
   "BITE #{n}": "MORDIDA #{n}",
-  "forced flat at market · VRF proof on-chain":
-    "cerrado a mercado · prueba VRF on-chain",
+  "closed at market · draw verified": "cerrado a mercado · sorteo verificado",
   "bite #{n} · {who}": "mordida #{n} · {who}",
-  tape: "cinta",
-
-  // ---- leaderboard ---------------------------------------------------------
-  Leaderboard: "Tabla",
-  revealed: "revelada",
-  "sealed by the enclave": "sellada por el enclave",
+  "log": "registro",
+  "Leaderboard": "Tabla",
+  "revealed": "revelada",
+  "sealed · unreadable": "sellado · ilegible",
   "positions hidden": "posiciones ocultas",
-  waiting: "esperando",
+  "waiting": "esperando",
   "nobody yet — be the first": "todavía nadie: sé el primero",
   "{n} survived": "{n} sobrevividas",
-  trade: "operación",
-  trades: "operaciones",
-  hidden: "oculta",
-  sealed: "sellada",
-  "mark-to-market equity": "equity marcado a mercado",
+  "trade": "operación",
+  "trades": "operaciones",
+  "hidden": "oculta",
+  "sealed": "sellada",
+  "equity at current prices": "equity al precio actual",
   "hidden until the bell": "oculto hasta el campanazo",
-
-  // ---- ticket --------------------------------------------------------------
   "Trade ticket": "Ticket de operación",
-  Status: "Estado",
-  gasless: "sin gas",
-  pressure: "presión",
-  "Entry is open. When the host locks the arena it gets delegated to the rollup and every trade runs for free at 10ms.":
-    "La entrada está abierta. Cuando el anfitrión bloquea, la arena se delega al rollup y cada operación corre gratis a 10 ms.",
-  "Seat #{n} is yours. Waiting for the clock to start.":
-    "El asiento #{n} es tuyo. Esperando que arranque el reloj.",
-  "Your seat is still open — join from the panel above.":
-    "Tu asiento sigue libre: únete desde el panel de arriba.",
-  Leverage: "Leverage",
+  "Status": "Estado",
+  "no fees": "sin comisiones",
+  "pressure": "presión",
+  "The table is open. When the host locks it, the table moves to the fast layer and every trade runs free at 10 ms.": "La mesa está abierta. Cuando el anfitrión la bloquea, pasa a la capa rápida y cada operación corre gratis a 10 ms.",
+  "Seat #{n} is yours. Waiting for the clock to start.": "El asiento #{n} es tuyo. Esperando que arranque el reloj.",
+  "Your seat is still open — join from the panel above.": "Tu asiento sigue libre: únete desde el panel de arriba.",
+  "Multiplier": "Multiplicador",
   "closing…": "cerrando…",
   "Close {side}": "Cerrar {side}",
   "not seated": "sin asiento",
   "sending…": "enviando…",
   "Open {side}": "Abrir {side}",
-  "Notional {lev}× your equity. PnL is marked against the MagicBlock price feed and settles on Solana when the round closes.":
-    "Notional de {lev}× tu equity. El PnL se marca contra el feed de MagicBlock y liquida en Solana al cerrar la ronda.",
-  "Round closed. Podium settled from the escrow vault.":
-    "Ronda cerrada. El podio se pagó desde el vault en escrow.",
-  "View on explorer": "Ver en el explorer",
-
-  // ---- lifecycle controls --------------------------------------------------
+  "Position size {lev}× your equity. Profit and loss follow the live price and settle on Solana when the round ends.": "Tamaño de la posición {lev}× tu equity. La ganancia y la pérdida siguen el precio en vivo y se liquidan en Solana al cerrar la ronda.",
+  "Round closed. The pot paid the podium.": "Ronda cerrada. El pozo pagó al podio.",
+  "View on Solana explorer": "Ver en el explorer de Solana",
   "need 2+ players": "faltan 2+ jugadores",
-  "delegating…": "delegando…",
-  "Delegate to rollup": "Delegar al rollup",
+  "moving…": "moviendo…",
+  "Move to fast layer": "Pasar a la capa rápida",
   "ranking…": "calculando…",
   "End round": "Cerrar ronda",
-  "calling the oracle…": "llamando al oráculo…",
-  "Call the shock (VRF)": "Llamar la mordida (VRF)",
-  "The pit bit seat #{n} — VRF drawn, flat at market.":
-    "El pozo mordió al asiento #{n}: sorteo VRF, cerrado a mercado.",
+  "calling the draw…": "llamando al sorteo…",
+  "Trigger the bite": "Disparar la mordida",
+  "The pit bit seat #{n} — random draw, closed at market.": "El pozo mordió al asiento #{n}: sorteo al azar, cerrado a mercado.",
   "sealing…": "sellando…",
-  "Seal the pit (PER)": "Sellar el pozo (PER)",
+  "Make positions private": "Hacer privadas las posiciones",
   "revealing…": "revelando…",
-  "Reveal the book": "Revelar el libro",
+  "Reveal positions": "Revelar posiciones",
   "recording…": "registrando…",
   "Record round in series": "Registrar ronda en la serie",
   "Round already counted in the series standings.": "La ronda ya está contada en la serie.",
-  "committing…": "commiteando…",
-  "Commit & undelegate": "Commit y undelegate",
+  "saving…": "guardando…",
+  "Save & return to Solana": "Guardar y volver a Solana",
   "paying…": "pagando…",
-  "Settle podium": "Liquidar podio",
-
-  // ---- footer --------------------------------------------------------------
-  "devnet · arena {key} · every state transition is a real transaction.":
-    "devnet · arena {key} · cada transición de estado es una transacción real.",
-  "The book is sealed inside the enclave (PER): a wallet outside the permission gets null for this account, token or not.":
-    "El libro está sellado dentro del enclave (PER): una wallet fuera del permiso recibe null para esta cuenta, tenga token o no.",
-  "Positions are hidden in this UI while the round runs; seal the pit to make them unreadable on-chain too.":
-    "Las posiciones se ocultan en esta UI mientras corre la ronda; sella el pozo para que tampoco se lean on-chain.",
-
-  // ---- arena guide ---------------------------------------------------------
+  "Pay the podium": "Pagar al podio",
+  "devnet · table {key} · every change of state is a real transaction.": "devnet · mesa {key} · cada cambio de estado es una transacción real.",
+  "Positions are sealed in a private environment: anyone outside the table asks for the account and gets nothing back, with or without a token.": "Las posiciones están selladas en un entorno privado: quien está fuera de la mesa pide la cuenta y no recibe nada, tenga token o no.",
+  "Positions are hidden on this screen while the round runs; make them private to hide them on Solana too.": "Las posiciones se ocultan en esta pantalla mientras corre la ronda; hazlas privadas para que tampoco se lean en Solana.",
   "The pot": "El pozo",
-  "Every seat paid the same entry ({entry} SOL) and it all sits in one escrow vault. The podium splits it 60 / 25 / 15.":
-    "Cada asiento pagó la misma entrada ({entry} SOL) y todo está en un vault en escrow. El podio lo reparte 60 / 25 / 15.",
-  "The vault is a program-owned PDA. Settlement is a CPI from that account, so neither the host nor the winner can move the pot by hand.":
-    "El vault es una PDA del programa. La liquidación es un CPI desde esa cuenta, así que ni el anfitrión ni el ganador pueden mover el pozo a mano.",
+  "Every seat paid the same entry ({entry} SOL) and it all sits in one shared pot. The podium splits it 60 / 25 / 15.": "Cada asiento pagó la misma entrada ({entry} SOL) y todo está en un pozo compartido. El podio lo reparte 60 / 25 / 15.",
+  "The pot belongs to the program, not to the host. Nobody can move it by hand — the payout is executed by the contract.": "El pozo es del programa, no del anfitrión. Nadie puede moverlo a mano: el pago lo ejecuta el contrato.",
   "What to do right now": "Qué hacer ahora",
-  "This panel always tells you the next move: join, invite the second player, lock. It changes with every state of the round.":
-    "Este panel siempre te dice el siguiente paso: unirte, invitar al segundo jugador, bloquear. Cambia con cada estado de la ronda.",
-  "This panel tells you what the round expects from you: trade, watch the bite, close before the bell.":
-    "Este panel te dice qué espera la ronda de ti: operar, cuidar la mordida, cerrar antes del campanazo.",
-  "This panel walks the payout: commit the state back to Solana, then settle the podium.":
-    "Este panel te lleva por el pago: commitea el estado a Solana y luego liquida el podio.",
-  "A round has four states on-chain — open, live, settled, closed — and each one allows different instructions. Guessing is how people lose money.":
-    "Una ronda tiene cuatro estados on-chain —abierta, en vivo, liquidada, cerrada— y cada uno permite instrucciones distintas. Adivinar es como la gente pierde dinero.",
+  "This panel always tells you the next step: join, invite the second player, lock. It changes with every state of the round.": "Este panel siempre te dice el siguiente paso: unirte, invitar al segundo jugador, bloquear. Cambia con cada estado de la ronda.",
+  "This panel tells you what the round expects from you: trade, watch the bite, close before the bell.": "Este panel te dice qué espera la ronda de ti: operar, cuidar la mordida, cerrar antes del campanazo.",
+  "This panel walks the payout: save the state back to Solana, then pay the podium.": "Este panel te lleva por el pago: guarda el estado en Solana y luego paga al podio.",
+  "A round has four states — open, live, paid out, closed — and each one allows different moves. Guessing is how people lose money.": "Una ronda tiene cuatro estados —abierta, en vivo, pagada, cerrada— y cada uno permite movimientos distintos. Adivinar es como la gente pierde dinero.",
   "The leaderboard": "La tabla",
-  "Your own PnL is marked to market. Everybody else shows “hidden” until the bell — that is the sealed book, not a bug.":
-    "Tu PnL se marca a mercado. Los demás muestran “oculta” hasta el campanazo: es el libro sellado, no un bug.",
-  "With the arena sealed inside the enclave, a wallet outside the permission gets null for the whole account, token or not. Your positions are private on-chain.":
-    "Con la arena sellada dentro del enclave, una wallet fuera del permiso recibe null para toda la cuenta, tenga token o no. Tus posiciones son privadas on-chain.",
+  "Your own profit and loss follow live prices. Everybody else shows “hidden” until the bell — that is the sealed book, not a bug.": "Tu ganancia y pérdida siguen el precio en vivo. Los demás muestran “oculta” hasta el campanazo: es el libro sellado, no un bug.",
+  "Inside the private environment, a wallet outside the table gets nothing back for the whole account, token or not. Your positions stay private on Solana.": "Dentro del entorno privado, una wallet fuera de la mesa no recibe nada de toda la cuenta, tenga token o no. Tus posiciones siguen privadas en Solana.",
   "The ticket": "El ticket",
-  "Pick LONG or SHORT, choose 1–5× leverage and open. The order executes inside the MagicBlock rollup: ~10ms and no gas.":
-    "Elige LONG o SHORT, escoge leverage de 1–5× y abre. La orden se ejecuta dentro del rollup de MagicBlock: ~10 ms y sin gas.",
-  "Trades never touch the base layer while the round runs, so there is no fee and no block wait. The price comes from the oracle read inside the rollup.":
-    "Las operaciones no tocan la capa base mientras corre la ronda: no hay comisión ni espera de bloque. El precio sale del oráculo leído dentro del rollup.",
+  "Pick LONG or SHORT, choose 1–5× and open. The order runs inside the fast layer: about 10 ms and no fees.": "Elige LONG o SHORT, escoge 1–5× y abre. La orden corre dentro de la capa rápida: unos 10 ms y sin comisiones.",
+  "Trades stay on the fast layer while the round runs, so there is no fee and no block wait. The price comes from Pyth inside that layer.": "Las operaciones se quedan en la capa rápida mientras corre la ronda: no hay comisión ni espera de bloque. El precio sale de Pyth dentro de esa capa.",
   "The bite is coming": "La mordida viene",
-  "Every {secs}s the pit force-closes one random player who is holding a position. This bar is the countdown.":
-    "Cada {secs}s el pozo cierra a mercado a un jugador al azar que tenga posición. Esta barra es la cuenta regresiva.",
-  "The victim is drawn by the VRF oracle and the callback is identity-checked on-chain. Staying flat is a real defense: the pit only bites players with risk open.":
-    "La víctima la sortea el oráculo VRF y el callback se valida por identidad on-chain. Quedarse plano es defensa real: el pozo solo muerde a quien tiene riesgo abierto.",
-  "Lifecycle controls": "Controles del ciclo",
-  "Join → lock → delegate → trade → end round → commit → settle. Each button is one real transaction, and anyone can push the permissionless ones.":
-    "Unirse → bloquear → delegar → operar → cerrar ronda → commit → liquidar. Cada botón es una transacción real y cualquiera puede empujar las que no piden permiso.",
-  "Delegate goes to the base layer, everything that touches the delegated arena goes to the rollup, and settle goes back to base. That layer rule is what makes it cheap and still final.":
-    "Delegate va a la capa base, todo lo que toca la arena delegada va al rollup y settle vuelve a base. Esa regla de capas es lo que lo hace barato y aun así final.",
+  "Every {secs}s the pit force-closes one random player who is holding a position. This bar is the countdown.": "Cada {secs}s el pozo cierra a mercado a un jugador al azar que tenga posición. Esta barra es la cuenta regresiva.",
+  "The player is drawn by a randomness oracle and the result is checked by the program. Staying flat is a real defence: the pit only bites players with risk open.": "Al jugador lo sortea un oráculo de aleatoriedad y el resultado lo valida el programa. Quedarse plano es defensa real: el pozo solo muerde a quien tiene riesgo abierto.",
+  "Round controls": "Controles de la ronda",
+  "Join → lock → move to the fast layer → trade → end round → save → pay. Each button is one real transaction, and anyone can push the ones that need no permission.": "Unirse → bloquear → pasar a la capa rápida → operar → cerrar ronda → guardar → pagar. Cada botón es una transacción real y cualquiera puede empujar los que no piden permiso.",
+  "Moving to the fast layer happens on Solana, everything that touches the table happens there, and the payout goes back to Solana. That split is what makes it cheap and still final.": "Pasar a la capa rápida ocurre en Solana, todo lo que toca la mesa ocurre ahí y el pago vuelve a Solana. Esa división es lo que lo hace barato y aun así definitivo.",
   "The feed": "El feed",
   "this round": "esta ronda",
   "entry": "entrada",
   "{side} entry @ {price}{approx}": "entrada {side} @ {price}{approx}",
   "positions revealed at the bell": "posiciones reveladas al campanazo",
   "one seat, no rival book to hide": "un asiento: no hay libro rival que esconder",
-  "your entry is drawn · rivals stay sealed until the bell":
-    "tu entrada se dibuja · los rivales siguen sellados hasta el campanazo",
+  "your entry is drawn · rivals stay sealed until the bell": "tu entrada se dibuja · los rivales siguen sellados hasta el campanazo",
 };

@@ -374,33 +374,33 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
     {
       target: '[data-guide="pot"]',
       title: t("The pot"),
-      body: t("Every seat paid the same entry ({entry} SOL) and it all sits in one escrow vault. The podium splits it 60 / 25 / 15.", {
+      body: t("Every seat paid the same entry ({entry} SOL) and it all sits in one shared pot. The podium splits it 60 / 25 / 15.", {
         entry: fmtSol(entrySol, 3),
       }),
-      why: t("The vault is a program-owned PDA. Settlement is a CPI from that account, so neither the host nor the winner can move the pot by hand."),
+      why: t("The pot belongs to the program, not to the host. Nobody can move it by hand — the payout is executed by the contract."),
     },
     {
       target: '[data-guide="nextstep"]',
       title: t("What to do right now"),
       body:
         status === "open"
-          ? t("This panel always tells you the next move: join, invite the second player, lock. It changes with every state of the round.")
+          ? t("This panel always tells you the next step: join, invite the second player, lock. It changes with every state of the round.")
           : status === "live"
             ? t("This panel tells you what the round expects from you: trade, watch the bite, close before the bell.")
-            : t("This panel walks the payout: commit the state back to Solana, then settle the podium."),
-      why: t("A round has four states on-chain — open, live, settled, closed — and each one allows different instructions. Guessing is how people lose money."),
+            : t("This panel walks the payout: save the state back to Solana, then pay the podium."),
+      why: t("A round has four states — open, live, paid out, closed — and each one allows different moves. Guessing is how people lose money."),
     },
     {
       target: '[data-guide="board"]',
       title: t("The leaderboard"),
-      body: t("Your own PnL is marked to market. Everybody else shows “hidden” until the bell — that is the sealed book, not a bug."),
-      why: t("With the arena sealed inside the enclave, a wallet outside the permission gets null for the whole account, token or not. Your positions are private on-chain."),
+      body: t("Your own profit and loss follow live prices. Everybody else shows “hidden” until the bell — that is the sealed book, not a bug."),
+      why: t("Inside the private environment, a wallet outside the table gets nothing back for the whole account, token or not. Your positions stay private on Solana."),
     },
     {
       target: '[data-guide="ticket"]',
       title: t("The ticket"),
-      body: t("Pick LONG or SHORT, choose 1–5× leverage and open. The order executes inside the MagicBlock rollup: ~10ms and no gas."),
-      why: t("Trades never touch the base layer while the round runs, so there is no fee and no block wait. The price comes from the oracle read inside the rollup."),
+      body: t("Pick LONG or SHORT, choose 1–5× and open. The order runs inside the fast layer: about 10 ms and no fees."),
+      why: t("Trades stay on the fast layer while the round runs, so there is no fee and no block wait. The price comes from Pyth inside that layer."),
     },
     ...(status === "live"
       ? [
@@ -408,15 +408,15 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             target: '[data-guide="bite"]',
             title: t("The bite is coming"),
             body: t("Every {secs}s the pit force-closes one random player who is holding a position. This bar is the countdown.", { secs: biteCooldown }),
-            why: t("The victim is drawn by the VRF oracle and the callback is identity-checked on-chain. Staying flat is a real defense: the pit only bites players with risk open."),
+            why: t("The player is drawn by a randomness oracle and the result is checked by the program. Staying flat is a real defence: the pit only bites players with risk open."),
           },
         ]
       : []),
     {
       target: '[data-guide="actions"]',
-      title: t("Lifecycle controls"),
-      body: t("Join → lock → delegate → trade → end round → commit → settle. Each button is one real transaction, and anyone can push the permissionless ones."),
-      why: t("Delegate goes to the base layer, everything that touches the delegated arena goes to the rollup, and settle goes back to base. That layer rule is what makes it cheap and still final."),
+      title: t("Round controls"),
+      body: t("Join → lock → move to the fast layer → trade → end round → save → pay. Each button is one real transaction, and anyone can push the ones that need no permission."),
+      why: t("Moving to the fast layer happens on Solana, everything that touches the table happens there, and the payout goes back to Solana. That split is what makes it cheap and still final."),
     },
   ].filter((s) => s.target !== '[data-guide="actions"]' || isCreator || status !== "open");
 
@@ -455,13 +455,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   /** The rollup connection: the TEE one when the arena lives behind the enclave. */
   const erConn = (): Connection => {
     if (tee) return tee.conn;
-    if (!erUrl) throw new Error(t("the arena is not delegated to a rollup"));
+    if (!erUrl) throw new Error(t("this table hasn't moved to the fast layer yet"));
     return new Connection(erUrl, { commitment: "confirmed" });
   };
 
   const seal = () =>
     run("seal", async () => {
-      if (!tee) throw new Error(t("TEE session not ready"));
+      if (!tee) throw new Error(t("private session not ready yet"));
       const program = programAt(tee.conn, wallet.publicKey);
       const accs = permissionAccounts(arenaPubkey, wallet.publicKey);
       const initTx = await program.methods.initPermission(nonce).accounts(accs).transaction();
@@ -493,7 +493,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
   const reveal = () =>
     run("reveal", async () => {
-      if (!tee) throw new Error(t("TEE session not ready"));
+      if (!tee) throw new Error(t("private session not ready yet"));
       const program = programAt(tee.conn, wallet.publicKey);
       const accs = permissionAccounts(arenaPubkey, wallet.publicKey);
       const tx = await program.methods.setPrivacy(nonce, false).accounts(accs).transaction();
@@ -701,16 +701,16 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           <span className="pill">
             <span className={`dot ${delegated ? "" : "warn"}`} />
             {!delegated
-              ? t("base layer")
+              ? t("on Solana")
               : sealed
-                ? t("PER · sealed")
+                ? t("private · sealed")
                 : tee
-                  ? t("PER · open")
+                  ? t("private · open")
                   : `ER · ${erUrl?.replace("https://", "") ?? ""}`}
           </span>
           {series && (
             <span className="pill">
-              {t("series · R{n}/{max}", { n: arena.roundNo, max: series.maxRounds })}
+              {t("round {n}/{max}", { n: arena.roundNo, max: series.maxRounds })}
             </span>
           )}
           <span className="pill mono">{balance.toFixed(3)} SOL</span>
@@ -722,7 +722,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           <div className="stat-label">{t("Pot")}</div>
           <div className="stat-value">{fmtSol(potSol)} SOL</div>
           <div className="stat-sub">
-            {t("{count}/{max} seats · entry {entry} SOL", {
+            {t("{count}/{max} seats · {entry} SOL to enter", {
               count: arena.playerCount,
               max: arena.maxPlayers,
               entry: fmtSol(sol(arena.entryFee), 2),
@@ -754,13 +754,13 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           ) : (
             <>
               <div className="stat-label">
-                {status === "open" ? t("starts on lock") : t("round")}
+                {status === "open" ? t("starts when it's locked") : t("round")}
               </div>
               <div className="stat-value">{c.status[status].toUpperCase()}</div>
             </>
           )}
           <div className="stat-sub" style={{ textAlign: "center" }}>
-            {t("{secs}s rounds · rake {rake}%", {
+            {t("{secs}s rounds · {rake}% fee", {
               secs: arena.duration.toString(),
               rake: arena.rakeBps / 100,
             })}
@@ -819,8 +819,8 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           now={now}
           price={price}
           title={feedNameOf(arena.feed)}
-          waiting={t("waiting for the feed")}
-          waitingSub={t("the feed publishes once the arena is on the rollup")}
+          waiting={t("waiting for prices")}
+          waitingSub={t("prices start once the table moves to the fast layer")}
           entryLabel={(sideNow, value, approx) =>
             t("{side} entry @ {price}{approx}", {
               side: sideNow === "long" ? t("LONG") : t("SHORT"),
@@ -858,19 +858,19 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 ? t("Join for {amount} SOL and run against the market", { amount: fmtSol(entrySol, 3) })
                 : t("Join for {amount} SOL and start with 1,000 credits", { amount: fmtSol(entrySol, 3) })
               : needMore > 0
-                ? t("You are in — the round cannot start alone")
+                ? t("You're in — a round needs a second player")
                 : isSolo
                   ? t("You are in — lock the arena to start the clock")
                   : isCreator
-                    ? t("Everyone is in: lock the arena to start the clock")
-                    : t("Everyone is in: waiting for the host to lock")}
+                    ? t("Everyone's in: lock the table to start the clock")
+                    : t("Everyone's in: waiting for the host to lock")}
           </div>
           <ul className="nextstep-steps">
             <li>
               <span className="nextstep-num">1</span>
               <span>
                 {myIndex < 0
-                  ? t("Join: your entry goes into an escrow vault and the program opens your seat.")
+                  ? t("Joining puts your entry into the shared pot and opens your seat.")
                   : t("You are seated and paid. Nothing else to deposit.")}
               </span>
             </li>
@@ -888,7 +888,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               <span className="nextstep-num">3</span>
               <span>
                 {isCreator ? t("You lock it: ") : t("The host locks it: ")}
-                {t("the arena delegates to MagicBlock, the clock starts and the book is sealed.")}
+                {t("the table moves to the fast layer, the clock starts and your moves go private.")}
               </span>
             </li>
           </ul>
@@ -934,16 +934,16 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             <span className="nextstep-title">{t("The clock is running")}</span>
             <span className="pill mono">{t("{clock} left", { clock: fmtClock(remaining) })}</span>
           </div>
-          <div className="nextstep-what">{t("Trade from the ticket, then survive the bite")}</div>
+          <div className="nextstep-what">{t("Trade from the ticket and survive the bite")}</div>
           <ul className="nextstep-steps">
             <li>
               <span className="nextstep-num">1</span>
-              <span>{t("Pick LONG or SHORT, choose leverage and open a position — it settles in ~10ms, no fees.")}</span>
+              <span>{t("Pick LONG or SHORT, choose 1–5× and open. It lands instantly and costs nothing.")}</span>
             </li>
             <li>
               <span className="nextstep-num">2</span>
               <span>
-                {t("Every {secs}s the pit force-closes one random player who is holding. Staying flat is a real defense.", { secs: biteCooldown })}
+                {t("Every {secs}s the pit closes one random player who is holding. Staying out is a real defence.", { secs: biteCooldown })}
               </span>
             </li>
             <li>
@@ -960,22 +960,22 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             <span className="nextstep-title">{t("Round closed")}</span>
             <span className="pill mono">{t("payout pending")}</span>
           </div>
-          <div className="nextstep-what">{t("Commit the round back to Solana, then settle the podium")}</div>
+          <div className="nextstep-what">{t("Save the round back to Solana, then pay the podium")}</div>
           <ul className="nextstep-steps">
             <li>
               <span className="nextstep-num">1</span>
               <span>
                 {delegated
-                  ? t("Commit & undelegate: the final state travels back from the rollup to the base layer.")
-                  : t("The arena is already back on the base layer.")}
+                  ? t("Save & return: the final state goes from the fast layer back to Solana.")
+                  : t("The table is already back on Solana.")}
               </span>
             </li>
             <li>
               <span className="nextstep-num">2</span>
               <span>
                 {isSolo
-                  ? t("Settle: the house pays your multiplier out of the entry and its own balance.")
-                  : t("Settle: the escrow vault pays 60/25/15 to the top three, plus the last-one-standing bonus.")}
+                  ? t("Pay out: the house pays your multiplier from the entry and its own balance.")
+                  : t("Pay out: the pot pays 60/25/15 to the top three, plus the last-one-standing bonus.")}
               </span>
             </li>
           </ul>
@@ -990,7 +990,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           </div>
           <div className="nextstep-what">
             {isSolo
-              ? t("Solo run settled — start the next one")
+              ? t("Solo run paid out — start the next one")
               : t("The podium took the pot — start the next one")}
           </div>
           <div className="nextstep-actions">
@@ -1034,7 +1034,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
         <div className="mad-banner">
           <span className="mad-badge">{t("fever")}</span>
           <span className="mad-line">“{madLine(wallet.publicKey.toBase58(), Math.floor(madLeft / 20), lang)}”</span>
-          <span className="mad-sub">{t("{n}s · your orders execute inverted", { n: madLeft })}</span>
+          <span className="mad-sub">{t("{n}s · your orders run backwards", { n: madLeft })}</span>
         </div>
       )}
 
@@ -1042,7 +1042,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
         <div className={`kill ${kill.mine ? "mine" : ""}`}>
           <span className="kill-n mono">{t("BITE #{n}", { n: kill.n })}</span>
           <span className="kill-who">{kill.label}</span>
-          <span className="kill-sub">{t("forced flat at market · VRF proof on-chain")}</span>
+          <span className="kill-sub">{t("closed at market · draw verified")}</span>
         </div>
       )}
 
@@ -1052,7 +1052,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
       {events.length > 0 && (
         <div className="ticker">
-          <span className="ticker-label">{t("tape")}</span>
+          <span className="ticker-label">{t("log")}</span>
           {events.map((e, i) => (
             <span className="ticker-item" key={`${e}-${i}`}>
               <span className="pip" />
@@ -1070,7 +1070,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               {revealed
                 ? t("revealed")
                 : sealed
-                  ? t("sealed by the enclave")
+                  ? t("sealed · unreadable")
                   : status === "live"
                     ? t("positions hidden")
                     : t("waiting")}
@@ -1119,7 +1119,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                   </span>
                   <span
                     className={`pnl ${showPnl ? (Math.abs(delta) < 0.005 ? "flat" : delta > 0 ? "up" : "down") : "sealed"}`}
-                    title={showPnl ? t("mark-to-market equity") : t("hidden until the bell")}
+                    title={showPnl ? t("equity at current prices") : t("hidden until the bell")}
                   >
                     {showPnl ? (Math.abs(delta) < 0.005 ? "±0.00" : `${delta > 0 ? "+" : ""}${delta.toFixed(2)}`) : revealed ? "—" : t("hidden")}
                   </span>
@@ -1140,7 +1140,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
         <div className="panel" data-guide="ticket">
           <div className="panel-head">
             <span>{status === "live" ? t("Trade ticket") : t("Status")}</span>
-            <span>{status === "live" ? t("gasless") : ""}</span>
+            <span>{status === "live" ? t("no fees") : ""}</span>
           </div>
           <div className="ticket">
             {mySeat && (
@@ -1158,7 +1158,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             {status === "open" && (
               <>
                 <p className="hint" style={{ marginTop: 0 }}>
-                  {t("Entry is open. When the host locks the arena it gets delegated to the rollup and every trade runs for free at 10ms.")}
+                  {t("The table is open. When the host locks it, the table moves to the fast layer and every trade runs free at 10 ms.")}
                 </p>
                 <p className="hint" style={{ marginTop: 10 }}>
                   {myIndex >= 0
@@ -1180,7 +1180,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 </div>
                 <div className="field">
                   <div className="field-label">
-                    <span>{t("Leverage")}</span>
+                    <span>{t("Multiplier")}</span>
                     <span className="leverage">{leverage}×</span>
                   </div>
                   <input
@@ -1212,7 +1212,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                   </button>
                 )}
                 <p className="hint">
-                  {t("Notional {lev}× your equity. PnL is marked against the MagicBlock price feed and settles on Solana when the round closes.", { lev: leverage })}
+                  {t("Position size {lev}× your equity. Profit and loss follow the live price and settle on Solana when the round ends.", { lev: leverage })}
                 </p>
               </>
             )}
@@ -1222,7 +1222,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 <p className="hint" style={{ marginTop: 0 }}>
                   {isSolo
                     ? t("Round closed. The house paid your multiplier.")
-                    : t("Round closed. Podium settled from the escrow vault.")}
+                    : t("Round closed. The pot paid the podium.")}
                 </p>
                 {arena.results.slice(0, arena.winnerCount).map((r, i) => (
                   <div className="row" key={r.player.toBase58()} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
@@ -1248,7 +1248,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    {t("View on explorer")}
+                    {t("View on Solana explorer")}
                   </a>
                 </div>
               </>
@@ -1274,7 +1274,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             )}
             {status === "live" && !delegated && (
               <button className="btn" disabled={busy !== null} onClick={delegate}>
-                {busy === "delegate" ? t("delegating…") : t("Delegate to rollup")}
+                {busy === "delegate" ? t("moving…") : t("Move to fast layer")}
               </button>
             )}
             {status === "live" && delegated && remaining <= 0 && (
@@ -1284,24 +1284,24 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
             )}
             {status === "live" && delegated && Number((arena as any).shockSeat) === 255 && (
               <button className="btn ghost" disabled={busy !== null} onClick={shock}>
-                {busy === "shock" ? t("calling the oracle…") : t("Call the shock (VRF)")}
+                {busy === "shock" ? t("calling the draw…") : t("Trigger the bite")}
               </button>
             )}
             {Number((arena as any).shockSeat) !== 255 && (
               <div className="hint">
-                {t("The pit bit seat #{n} — VRF drawn, flat at market.", {
+                {t("The pit bit seat #{n} — random draw, closed at market.", {
                   n: Number((arena as any).shockSeat) + 1,
                 })}
               </div>
             )}
             {status === "live" && delegated && tee && !sealed && (
               <button className="btn" disabled={busy !== null} onClick={seal}>
-                {busy === "seal" ? t("sealing…") : t("Seal the pit (PER)")}
+                {busy === "seal" ? t("sealing…") : t("Make positions private")}
               </button>
             )}
             {delegated && sealed && (
               <button className="btn ghost" disabled={busy !== null} onClick={reveal}>
-                {busy === "reveal" ? t("revealing…") : t("Reveal the book")}
+                {busy === "reveal" ? t("revealing…") : t("Reveal positions")}
               </button>
             )}
             {status === "closed" && series && !arena.seriesRecorded && (
@@ -1317,12 +1317,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
 
             {status === "settled" && delegated && !sealed && (
               <button className="btn" disabled={busy !== null} onClick={commit}>
-                {busy === "commit" ? t("committing…") : t("Commit & undelegate")}
+                {busy === "commit" ? t("saving…") : t("Save & return to Solana")}
               </button>
             )}
             {status === "settled" && !delegated && (
               <button className="btn" disabled={busy !== null} onClick={settle}>
-                {busy === "settle" ? t("paying…") : t("Settle podium")}
+                {busy === "settle" ? t("paying…") : t("Pay the podium")}
               </button>
             )}
           </div>
@@ -1330,12 +1330,12 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       </div>
 
       <div className="foot-note">
-        {t("devnet · arena {key} · every state transition is a real transaction.", {
+        {t("devnet · table {key} · every change of state is a real transaction.", {
           key: shortKey(arenaPubkey),
         })}
         {sealed
-          ? ` ${t("The book is sealed inside the enclave (PER): a wallet outside the permission gets null for this account, token or not.")}`
-          : ` ${t("Positions are hidden in this UI while the round runs; seal the pit to make them unreadable on-chain too.")}`}
+          ? ` ${t("Positions are sealed in a private environment: anyone outside the table asks for the account and gets nothing back, with or without a token.")}`
+          : ` ${t("Positions are hidden on this screen while the round runs; make them private to hide them on Solana too.")}`}
       </div>
 
       <Guide
