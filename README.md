@@ -8,7 +8,7 @@ La tabla de posiciones es pública. Tus operaciones, no.
 ![PIT — landing](docs/screens/16-landing.png)
 
 **Live:** https://the-pit.zerotwolabs.xyz/ · **Código:** https://github.com/usainbluntmx/the-pit
-**Demo (68 s, ES):** [`docs/demo.mp4`](docs/demo.mp4) · [`docs/demo-sin-voz.mp4`](docs/demo-sin-voz.mp4)
+**Demo (89 s, ES):** [`docs/demo.mp4`](docs/demo.mp4) · [`docs/demo-sin-voz.mp4`](docs/demo-sin-voz.mp4)
 
 Estado: **devnet, 22 nov 2026** — programa desplegado, ciclo completo y las tres
 piezas del stack (el carril rápido o ER, el libro sellado o Private ER, y el sorteo
@@ -41,7 +41,7 @@ verificable o VRF) comprobadas con firmas reales.
 5. Al cerrar: `end_round` → `commit` → `settle` desde la misma UI (cerrar la ronda,
    guardarla en Solana y pagar).
 
-Si quieres ver el flujo completo sin leer nada más, el video de 68 segundos está arriba.
+Si quieres ver el flujo completo sin leer nada más, el video de 89 segundos está arriba.
 
 ![El lobby: mesas abiertas, asientos y entrada](docs/screens/01-lobby.png)
 

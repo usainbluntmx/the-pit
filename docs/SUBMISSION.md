@@ -44,7 +44,7 @@ Entertainment Finance · Trading / gaming · DeFi consumer
 - **App (devnet):** https://the-pit.zerotwolabs.xyz/
 - **App (respaldo estático):** https://usainbluntmx.github.io/the-pit/
 - **Repo:** https://github.com/usainbluntmx/the-pit
-- **Video (68 s, ES):** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo.mp4
+- **Video (89 s, ES):** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo.mp4
 - **Video sin voz:** https://github.com/usainbluntmx/the-pit/raw/main/docs/demo-sin-voz.mp4
 - **Programa:** https://explorer.solana.com/address/4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar?cluster=devnet
 
