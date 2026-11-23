@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as anchor from "@anchor-lang/core";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram } from "@solana/web3.js";
+import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
 import {
   Arena,
   DELEGATION_PROGRAM_ID,
@@ -577,10 +577,25 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       return sig;
     });
 
-  const trade = (kind: "open" | "close") =>
-    run(kind === "open" ? "open" : "close", async () => {
+  const trade = (kind: "open" | "close" | "reenter") =>
+    run(kind === "open" ? "open" : kind, async () => {
       const er = erConn();
       const program = programAt(er, wallet.publicKey);
+
+      // Re-entering is one tap and one signature: close and open go in the same transaction,
+      // so both read the same price and the seat never sits flat in between.
+      if (kind === "reenter") {
+        const closeIx = await program.methods
+          .closePosition(nonce)
+          .accounts({ trader: wallet.publicKey, arena: arenaPubkey, feed: arena!.feed })
+          .instruction();
+        const openIx = await program.methods
+          .openPosition(nonce, side, leverage)
+          .accounts({ trader: wallet.publicKey, arena: arenaPubkey, feed: arena!.feed })
+          .instruction();
+        return sendTx(er, new Transaction().add(closeIx, openIx), wallet, { skipPreflight: true });
+      }
+
       const builder =
         kind === "open"
           ? program.methods
@@ -1232,11 +1247,22 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                   />
                 </div>
                 {mySeat && mySeat.side !== 0 ? (
-                  <button className="btn ghost" disabled={busy !== null} onClick={() => trade("close")}>
-                    {busy === "close"
-                      ? t("closing…")
-                      : t("Close {side}", { side: mySeat.side > 0 ? "LONG" : "SHORT" })}
-                  </button>
+                  <div className="trade-actions">
+                    <button
+                      className={`btn ${side === 1 ? "long" : "short"}`}
+                      disabled={busy !== null}
+                      onClick={() => trade("reenter")}
+                    >
+                      {busy === "reenter"
+                        ? t("renewing…")
+                        : t("Renew {side}", { side: side === 1 ? "LONG" : "SHORT" })}
+                    </button>
+                    <button className="btn ghost" disabled={busy !== null} onClick={() => trade("close")}>
+                      {busy === "close"
+                        ? t("closing…")
+                        : t("Close {side}", { side: mySeat.side > 0 ? "LONG" : "SHORT" })}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     className={`btn ${side === 1 ? "long" : "short"}`}

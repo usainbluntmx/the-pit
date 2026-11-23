@@ -392,6 +392,12 @@ h1 em {
   margin-bottom: 16px;
 }
 
+.trade-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .side-btn {
   border: 1px solid var(--line);
   background: var(--panel-2);
