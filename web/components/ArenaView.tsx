@@ -91,6 +91,8 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   const crankRef = useRef(false);
   const roundRef = useRef("");
   const seatSnapRef = useRef<Map<number, { side: number; entry: number }>>(new Map());
+  /** Live feed handle: a dedicated 1 s ticker keeps the line moving between reloads. */
+  const liveRef = useRef<{ conn: Connection; feed: PublicKey; live: boolean } | null>(null);
 
   const base = useMemo(() => baseConnection(), []);
 
@@ -127,13 +129,25 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
         const pts = Array.isArray(parsed) ? parsed : parsed?.pts;
         const marks = Array.isArray(parsed) ? [] : parsed?.mk;
         if (Array.isArray(pts)) {
+          // Anything outside a sane dollar range is a leftover from a build that stored
+          // raw 1e9 prices; drawing it would flatten the whole line.
           setSamples(
             pts
-              .filter((pt: any) => Number.isFinite(pt?.t) && Number.isFinite(pt?.p))
+              .filter(
+                (pt: any) =>
+                  Number.isFinite(pt?.t) &&
+                  Number.isFinite(pt?.p) &&
+                  pt.p > 0 &&
+                  pt.p < 1_000_000,
+              )
               .slice(-1800),
           );
         }
-        if (Array.isArray(marks)) setEntries(marks.slice(-24));
+        if (Array.isArray(marks)) {
+          setEntries(
+            marks.filter((m: any) => Number.isFinite(m?.price) && m.price > 0 && m.price < 1_000_000).slice(-24),
+          );
+        }
       } catch {
         /* a broken cache never blocks the round */
       }
@@ -180,6 +194,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           // A round owns its price history: when the round changes, the chart starts over.
           restoreRound(a);
 
+          liveRef.current = { conn, feed: a.feed, live: statusOf(a) === "live" };
           const live = await readPrice(conn, a.feed).catch(() => null);
           setPrice(live);
           const ts = Math.floor(Date.now() / 1000);
@@ -279,6 +294,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       restoreRound(a);
       await loadSeries(a.series);
       setErUrl(null);
+      liveRef.current = null;
       // The feed only publishes inside the rollup: on the base layer the account is
       // delegated and stale, so reading it here would show an old price as if it were live.
       setPrice(null);
@@ -300,6 +316,29 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       clearInterval(tick);
     };
   }, [load, base, wallet]);
+
+  // The line has to move like a market, not like a page refresh: a light ticker reads the
+  // feed once a second and appends to the same buffer the 4 s reload uses.
+  useEffect(() => {
+    let alive = true;
+    const id = setInterval(async () => {
+      const feed = liveRef.current;
+      if (!feed || !feed.live) return;
+      const p = await readPrice(feed.conn, feed.feed).catch(() => null);
+      if (!alive || p === null || !Number.isFinite(p) || p <= 0) return;
+      setPrice(p);
+      const ts = Math.floor(Date.now() / 1000);
+      setSamples((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.t >= ts) return prev;
+        return [...prev, { t: ts, p }].slice(-1800);
+      });
+    }, 1000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
+  }, []);
 
   // A reload in the middle of a round must not erase the line the player already saw.
   useEffect(() => {

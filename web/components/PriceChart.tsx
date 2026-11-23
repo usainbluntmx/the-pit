@@ -31,6 +31,14 @@ type Props = {
 export const fmtPrice = (v: number) =>
   v >= 100 ? v.toFixed(2) : v >= 1 ? v.toFixed(3) : v.toFixed(4);
 
+/** Axis ticks stay short: a tiny move no longer prints twelve digits in the gutter. */
+const fmtAxis = (v: number) => {
+  const a = Math.abs(v);
+  if (a >= 1_000_000) return `${(v / 1_000_000).toFixed(2)}M`;
+  if (a >= 10_000) return `${(v / 1_000).toFixed(1)}k`;
+  return fmtPrice(v);
+};
+
 type Chart = {
   empty: boolean;
   innerW: number;
@@ -88,7 +96,7 @@ export function PriceChart({
   const hasData = points.length >= 2 || price !== null;
   const h = !hasData ? (narrow ? 170 : 200) : narrow ? 236 : 320;
   const padL = 10;
-  const padR = narrow ? 48 : 64;
+  const padR = narrow ? 54 : 72;
   const padT = 18;
   const padB = 26;
 
@@ -228,8 +236,8 @@ export function PriceChart({
                 strokeDasharray={g.top || g.bottom ? undefined : "3 6"}
                 strokeOpacity={g.top || g.bottom ? 0.9 : 0.55}
               />
-              <text x={w - padR + 8} y={g.y + 4} className="feed-axis">
-                {fmtPrice(g.v)}
+              <text x={w - 8} y={g.y + 4} textAnchor="end" className="feed-axis">
+                {fmtAxis(g.v)}
               </text>
             </g>
           ))}
@@ -263,6 +271,16 @@ export function PriceChart({
             </g>
           ) : (
             <>
+              {chart.nowX < w - padR && (
+                <rect
+                  x={chart.nowX}
+                  y={padT}
+                  width={w - padR - chart.nowX}
+                  height={chart.innerH}
+                  fill="var(--text)"
+                  opacity="0.025"
+                />
+              )}
               {chart.band && (
                 <path
                   d={chart.band}
@@ -294,10 +312,6 @@ export function PriceChart({
                 const my = chart.y(m.price);
                 const color = m.side === 1 ? "var(--long)" : "var(--short)";
                 const lastOne = i === chart.visibleMarks.length - 1;
-                const labelY =
-                  m.side === 1
-                    ? Math.max(padT + 13, my - 17)
-                    : Math.min(padT + chart.innerH - 16, my + 26);
                 return (
                   <g key={`${m.t}-${i}`}>
                     <line
@@ -328,19 +342,61 @@ export function PriceChart({
                       fill={color}
                     />
                     <circle cx={mx} cy={my} r="3.2" fill={color} />
-                    {(lastOne || !narrow) && (
-                      <text
-                        x={Math.min(Math.max(mx + 9, padL + 4), w - padR - (narrow ? 90 : 130))}
-                        y={labelY}
-                        className="feed-mark"
-                        fill={color}
-                      >
-                        {entryLabel(m.side === 1 ? "long" : "short", fmtPrice(m.price), !!m.approx)}
-                      </text>
-                    )}
                   </g>
                 );
               })}
+
+              {/* The entry is a reference line, not a dot: one look tells the player whether
+                  the price is on the winning side of their seat. */}
+              {chart.mark &&
+                (() => {
+                  const color = chart.mark!.side === 1 ? "var(--long)" : "var(--short)";
+                  const ey = chart.y(chart.mark!.price);
+                  const ly = chart.tailPrice !== null ? chart.y(chart.tailPrice) : null;
+                  const shift = ly !== null && Math.abs(ly - ey) < 24 ? (ey > h / 2 ? -24 : 24) : 0;
+                  const text = `$${fmtPrice(chart.mark!.price)}`;
+                  const pw = text.length * 6.3 + 14;
+                  return (
+                    <g>
+                      <line
+                        x1={padL}
+                        x2={w - padR}
+                        y1={ey}
+                        y2={ey}
+                        stroke={color}
+                        strokeOpacity="0.5"
+                        strokeDasharray="5 6"
+                      >
+                        <title>
+                          {entryLabel(
+                            chart.mark!.side === 1 ? "long" : "short",
+                            fmtPrice(chart.mark!.price),
+                            !!chart.mark!.approx,
+                          )}
+                        </title>
+                      </line>
+                      <rect
+                        x={w - padR - pw - 4}
+                        y={ey - 9 + shift}
+                        width={pw}
+                        height="18"
+                        rx="9"
+                        fill="var(--panel)"
+                        stroke={color}
+                        strokeOpacity="0.85"
+                      />
+                      <text
+                        x={w - padR - 4 - pw / 2}
+                        y={ey + 3.4 + shift}
+                        textAnchor="middle"
+                        className="feed-mark"
+                        fill={color}
+                      >
+                        {text}
+                      </text>
+                    </g>
+                  );
+                })()}
 
               {chart.tailPrice !== null && (
                 <g>

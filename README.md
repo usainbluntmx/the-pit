@@ -43,6 +43,8 @@ verificable o VRF) comprobadas con firmas reales.
 
 Si quieres ver el flujo completo sin leer nada más, el video de 68 segundos está arriba.
 
+![El lobby: mesas abiertas, asientos y entrada](docs/screens/01-lobby.png)
+
 ---
 
 ## Cómo se juega
@@ -62,8 +64,6 @@ funciona como caja fuerte. De ahí sale el pozo y de ahí se paga al final.
 El creador bloquea la arena cuando ya están los que van a jugar. En ese momento la mesa
 se "muda" a un carril rápido de MagicBlock y empieza la cuenta regresiva. Las rondas van
 de **60 segundos a 7 días**.
-
-![Arena en vivo: pozo, reloj, precio y libro sellado](docs/screens/07-live.png)
 
 ### 3. Operas
 
@@ -90,8 +90,6 @@ La mordida elige **al azar** a un asiento que tenga posición abierta y lo cierr
 mercado. Si estás plano, no te toca. Por eso aguantar con posición es una decisión, no
 un reflejo.
 
-![La mordida: aviso en pantalla y libro sellado](docs/screens/08-bite.png)
-
 ### 5. El campanazo
 
 Cuando se acaba el tiempo, la ronda se cierra, las posiciones se destapan y se calcula
@@ -104,8 +102,6 @@ Antes del reparto hay dos cosas que pueden mover el pozo:
   asiento se lleva el **10 %** del pozo antes del podio.
 - **Fiebre**: si tu presión llega a 100, tus órdenes salen invertidas durante 20 segundos.
   Pides long y se ejecuta short. No pierdes el juicio, pierdes el mando.
-
-![Podio y pago desde el escrow](docs/screens/05-podium.png)
 
 ### 6. El podio y la serie
 
@@ -473,8 +469,6 @@ Al llegar a 100 el asiento entra en **fiebre durante 20 s**:
 - La UI lo muestra glitcheado: nombre con aberración cromática, línea de delirio y la
   barra de presión al rojo.
 
-![Fiebre: presión al tope y órdenes invertidas](docs/screens/15-mad.png)
-
 La línea de delirio la genera el juego con una semilla (`seat + mad_until`), no el modelo.
 Es reproducible: la misma fiebre produce el mismo texto.
 
@@ -579,8 +573,9 @@ Arena suelta con un mercado concreto, para probar feeds sin la UI:
 npx tsx scripts/create-arena.ts BTC     # SOL | BTC | ETH
 ```
 
-Capturas del flujo real en `docs/screens/` (landing, lobby, arena, mordida, fiebre,
-reveal, serie).
+Capturas en `docs/screens/` (landing, lobby y serie). Las de la arena en vivo se rehacen
+cuando haya una ronda con posiciones abiertas: el gráfico del feed cambió y las viejas
+quedaron desactualizadas.
 
 ### Toolchain
 

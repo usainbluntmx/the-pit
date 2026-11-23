@@ -83,7 +83,8 @@ export type Seat = {
   bankroll: anchor.BN;
   realized: anchor.BN;
   notional: anchor.BN;
-  entryPrice: anchor.BN;
+  /** USD, already divided by FIXED: the program stores the oracle price in 1e9 units. */
+  entryPrice: number;
   trades: number;
   side: number;
   bites: number;
@@ -233,7 +234,14 @@ export async function fetchArena(
   arena: PublicKey,
 ): Promise<Arena> {
   const program = programAt(connection, DUMMY);
-  const decoded = await (program.account as any).arena.fetch(arena);
+  const decoded: any = await (program.account as any).arena.fetch(arena);
+  // The program keeps prices in 1e9 units (FIXED). The feed reader already returns USD,
+  // so the seat is normalised here once instead of in every consumer: an unscaled entry
+  // price makes the chart axis explode and marks a winning seat as losing.
+  decoded.seats = (decoded.seats ?? []).map((seat: any) => ({
+    ...seat,
+    entryPrice: Number(seat.entryPrice) / FIXED,
+  }));
   return { publicKey: arena, ...decoded } as Arena;
 }
 
