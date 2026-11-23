@@ -214,13 +214,13 @@ export const es: Copy = {
       "De dos a ocho wallets, un pozo compartido y tres asientos que cobran. El podio se lleva 60, 25 y 15 por ciento.",
     modeArenaMeta: "2–8 jugadores · invita a un rival",
     modeSoloHint:
-      "Un asiento contra el mercado. Si terminas arriba de 1,000 créditos, la casa te paga hasta 3× tu entrada; si terminas abajo, se la queda.",
+      "Un asiento contra el mercado. Si terminas arriba de 1,000 créditos, la casa te paga hasta 3× tu entrada; si terminas abajo, se la queda. Aquí no hay sorteo: mientras tengas posición abierta, la mordida te toca siempre.",
     modeSoloMeta: "1 asiento · sin invitación · hasta 3×",
     playSolo: "Jugar solo · contra el mercado",
     playArena: "Ver mesas abiertas",
     soloBadge: "solo",
     hostHintSolo:
-      "Una corrida solo tiene un asiento: tú contra el mercado. La casa es la otra parte de la operación — te paga hasta 3× tu entrada si terminas arriba de 1,000 créditos y se la queda si no. Bloquea la mesa para arrancar el reloj.",
+      "Una corrida solo tiene un asiento: tú contra el mercado. La casa es la otra parte de la operación — te paga hasta 3× tu entrada si terminas arriba de 1,000 créditos y se la queda si no. Bloquea la mesa para arrancar el reloj — y recuerda que aquí no hay sorteo: mientras tengas posición abierta, la mordida te toca siempre.",
     seriesToggle: "Serie · 3 rondas, los puntos se acumulan",
     singleToggle: "Una sola ronda",
     create: "Crear mesa",

@@ -1253,6 +1253,11 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 <p className="hint">
                   {t("Position size {lev}× your equity. Profit and loss follow the live price and settle on Solana when the round ends.", { lev: leverage })}
                 </p>
+                {isSolo && (
+                  <p className="hint hint-bite">
+                    {t("Solo has no draw: while you hold a position, the bite comes for you every time.")}
+                  </p>
+                )}
               </>
             )}
 

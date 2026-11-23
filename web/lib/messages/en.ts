@@ -211,13 +211,13 @@ export const en = {
       "Two to eight wallets, one shared pot, three paid seats. The podium takes 60, 25 and 15 percent.",
     modeArenaMeta: "2–8 players · invite a rival",
     modeSoloHint:
-      "One seat against the market. Finish above 1,000 credits and the house pays you up to 3× your entry; finish below and it keeps it.",
+      "One seat against the market. Finish above 1,000 credits and the house pays you up to 3× your entry; finish below and it keeps it. No draw here: while you hold a position, the bite comes for you every time.",
     modeSoloMeta: "1 seat · no invite needed · up to 3×",
     playSolo: "Play solo · against the market",
     playArena: "Browse open tables",
     soloBadge: "solo",
     hostHintSolo:
-      "A solo run has one seat: you against the market. The house is the other side of the trade — it pays up to 3× your entry if you finish above 1,000 credits and keeps it if you don't. Lock the table to start the clock.",
+      "A solo run has one seat: you against the market. The house is the other side of the trade — it pays up to 3× your entry if you finish above 1,000 credits and keeps it if you don't. Lock the table to start the clock — and remember there is no draw here: while you hold a position, the bite comes for you every single time.",
     seriesToggle: "Series · 3 rounds, points add up",
     singleToggle: "Single round",
     create: "Create table",
