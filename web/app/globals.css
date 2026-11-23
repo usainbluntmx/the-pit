@@ -354,6 +354,13 @@ h1 em {
 .pnl.up {
   color: var(--long);
 }
+/* Final equity next to the signed result: context, not the headline. */
+.pnl-ref {
+  color: var(--dim);
+  font-weight: 400;
+  font-size: 12px;
+}
+
 .pnl.down {
   color: var(--short);
 }

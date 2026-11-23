@@ -1265,25 +1265,41 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               <>
                 <p className="hint" style={{ marginTop: 0 }}>
                   {isSolo
-                    ? t("Round closed. The house paid your multiplier.")
+                    ? Number(arena.results[0]?.equity ?? 0) / FIXED >= 1_000
+                      ? t("Round closed. The house paid your multiplier.")
+                      : t("Round closed. You finished below 1,000 credits: the house keeps the entry.")
                     : t("Round closed. The pot paid the podium.")}
                 </p>
-                {arena.results.slice(0, arena.winnerCount).map((r, i) => (
-                  <div className="row" key={r.player.toBase58()} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
-                    <span className="rank mono">#{i + 1}</span>
-                    <span className="who mono">{r.player.equals(wallet.publicKey) ? t("you") : shortKey(r.player)}</span>
-                    <span className="pnl up">{(Number(r.equity) / FIXED).toFixed(4)}</span>
-                  </div>
-                ))}
-                {isSolo && arena.results[0] && (
-                  <div className="row" style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
-                    <span className="who">{t("Solo payout")}</span>
-                    <span className="pnl up">
-                      {(soloMultiplierBps(Number(arena.results[0].equity) / FIXED) / 10_000).toFixed(2)}× ·{" "}
-                      {fmtSol(soloPayoutSol(entrySol, Number(arena.results[0].equity) / FIXED), 4)} SOL
-                    </span>
-                  </div>
-                )}
+                {arena.results.slice(0, arena.winnerCount).map((r, i) => {
+                  const equity = Number(r.equity) / FIXED;
+                  const delta = equity - 1_000;
+                  return (
+                    <div className="row" key={r.player.toBase58()} style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                      <span className="rank mono">#{i + 1}</span>
+                      <span className="who mono">{r.player.equals(wallet.publicKey) ? t("you") : shortKey(r.player)}</span>
+                      <span className={`pnl ${delta >= 0 ? "up" : "down"}`}>
+                        {delta >= 0 ? "+" : ""}
+                        {delta.toFixed(4)}
+                        <span className="pnl-ref"> · {equity.toFixed(4)}</span>
+                      </span>
+                    </div>
+                  );
+                })}
+                {isSolo &&
+                  arena.results[0] &&
+                  (() => {
+                    const equity = Number(arena.results[0].equity) / FIXED;
+                    const payout = soloPayoutSol(entrySol, equity);
+                    const multiplier = soloMultiplierBps(equity) / 10_000;
+                    return (
+                      <div className="row" style={{ padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                        <span className="who">{t("Solo payout")}</span>
+                        <span className={`pnl ${payout > 0 ? "up" : "down"}`}>
+                          {multiplier.toFixed(2)}× · {fmtSol(payout, 4)} SOL
+                        </span>
+                      </div>
+                    );
+                  })()}
                 <div style={{ marginTop: 14 }}>
                   <a
                     className="btn ghost"
@@ -1298,6 +1314,39 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               </>
             )}
           </div>
+
+          {/* Points were only visible in the lobby: inside the arena the player could not see
+              where they stand in the series. */}
+          {series && (
+            <div className="panel" style={{ marginTop: 14 }} data-guide="series">
+              <div className="panel-head">
+                <span>{t("Series standings")}</span>
+                <span className="mono">
+                  {t("round {n}/{max}", { n: arena.roundNo, max: series.maxRounds })}
+                </span>
+              </div>
+              <div style={{ padding: "4px 16px 14px" }}>
+                {[...series.standings]
+                  .sort((a, b) => b.points - a.points)
+                  .slice(0, 6)
+                  .map((r, i) => (
+                    <div className="row" key={r.player.toBase58()}>
+                      <span className="rank mono">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="who">
+                        {r.player.equals(wallet.publicKey) ? t("you") : handleOf(r.player.toBase58())}
+                        <small>{t("{p} podiums · {s} survived · {b} bites", { p: r.podiums, s: r.survived, b: r.bites })}</small>
+                      </span>
+                      <span className="pnl">{t("{n} pts", { n: r.points })}</span>
+                    </div>
+                  ))}
+                {series.standings.length === 0 && (
+                  <p className="hint" style={{ marginTop: 4 }}>
+                    {t("Points appear once the first round is recorded in the series.")}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Host / lifecycle controls */}
           <div className="actions" data-guide="actions">

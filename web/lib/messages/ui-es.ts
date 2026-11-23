@@ -123,6 +123,13 @@ export const ES_UI: Record<string, string> = {
   "Your seat is still open — join from the panel above.": "Tu asiento sigue libre: únete desde el panel de arriba.",
   "Multiplier": "Multiplicador",
   "closing…": "cerrando…",
+  "Round closed. You finished below 1,000 credits: the house keeps the entry.":
+    "Ronda cerrada. Terminaste debajo de 1,000 créditos: la casa se queda la entrada.",
+  "Series standings": "Tabla de la serie",
+  "Points appear once the first round is recorded in the series.":
+    "Los puntos aparecen cuando se registra la primera ronda de la serie.",
+  "{n} pts": "{n} pts",
+  "{p} podiums · {s} survived · {b} bites": "{p} podios · {s} sobrevividas · {b} mordidas",
   "Solo has no draw: while you hold a position, the bite comes for you every time.":
     "En solo no hay sorteo: mientras tengas posición abierta, la mordida te toca siempre.",
   "Close {side}": "Cerrar {side}",
