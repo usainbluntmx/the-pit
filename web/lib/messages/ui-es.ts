@@ -123,8 +123,6 @@ export const ES_UI: Record<string, string> = {
   "Your seat is still open — join from the panel above.": "Tu asiento sigue libre: únete desde el panel de arriba.",
   "Multiplier": "Multiplicador",
   "closing…": "cerrando…",
-  "Renew {side}": "Renovar {side}",
-  "renewing…": "renovando…",
   "Close {side}": "Cerrar {side}",
   "not seated": "sin asiento",
   "sending…": "enviando…",
