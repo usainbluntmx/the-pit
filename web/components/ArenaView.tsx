@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as anchor from "@anchor-lang/core";
-import { Connection, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  ComputeBudgetProgram,
+  Connection,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from "@solana/web3.js";
 import {
   Arena,
   DELEGATION_PROGRAM_ID,
@@ -593,7 +600,17 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
           .openPosition(nonce, side, leverage)
           .accounts({ trader: wallet.publicKey, arena: arenaPubkey, feed: arena!.feed })
           .instruction();
-        return sendTx(er, new Transaction().add(closeIx, openIx), wallet, { skipPreflight: true });
+        // Two instructions in one transaction need more than the default 200k CU.
+        return sendTx(
+          er,
+          new Transaction().add(
+            ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }),
+            closeIx,
+            openIx,
+          ),
+          wallet,
+          { skipPreflight: true },
+        );
       }
 
       const builder =
