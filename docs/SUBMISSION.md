@@ -25,8 +25,12 @@ MagicBlock rollup, so every LONG or SHORT order lands in about 10 ms and costs n
 positions stay sealed inside a private environment: a wallet outside the table asks for the
 account and gets nothing back, with or without a valid token. Every few seconds the pit bites —
 a randomness oracle picks one player who is holding a position and closes them at market, and
-anyone can check the draw. Pressure from bites and losing trades builds toward "fever": for 20
-seconds the program flips your orders, so you ask for long and get short. At the bell the round
+anyone can check the draw. The bite is played, not reported: two rows of teeth close over the
+whole screen and the crunch is synthesised in the browser. Pressure from bites and losing trades
+builds toward "fever": for 20
+seconds the program flips your orders, so you ask for long and get short. Fever takes the screen
+too: it goes dark, stray lines start showing up, and the first click on open is swallowed
+(closing is never blocked). At the bell the round
 is written back to Solana, positions are revealed and the pot pays the podium 60/25/15. Series
 chain three rounds with points written on-chain. A single player can run a solo table against
 the market: one seat, the same entry, and a house account that pays up to 3× the entry if the

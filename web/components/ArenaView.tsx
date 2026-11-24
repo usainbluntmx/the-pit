@@ -34,7 +34,8 @@ import {
   waitFor,
 } from "@/lib/pit";
 import Link from "next/link";
-import { CountdownRing, EquityBar, handleOf, madLine, thump } from "@/components/Bits";
+import { CountdownRing, EquityBar, handleOf, madLine, crunch } from "@/components/Bits";
+import { BiteFX, FeverFX, type BiteCue } from "@/components/Effects";
 import { PriceChart, fmtPrice, type FeedMark, type FeedPoint } from "@/components/PriceChart";
 import Guide, { type GuideStep } from "@/components/Guide";
 import { LangSwitch } from "@/components/LangSwitch";
@@ -86,6 +87,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
   >([]);
   const [events, setEvents] = useState<string[]>([]);
   const [kill, setKill] = useState<{ label: string; n: number; mine: boolean } | null>(null);
+  const [biteCue, setBiteCue] = useState<BiteCue | null>(null);
+  const [feverTaunt, setFeverTaunt] = useState<string | null>(null);
+  const feverSnagRef = useRef(0);
   const [series, setSeries] = useState<SeriesAccount | null>(null);
   const lastShockRef = useRef(-1);
   const crankRef = useRef(false);
@@ -250,7 +254,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                 ? t("THE PIT BIT YOU")
                 : t("THE PIT BIT {name}", { name: victimName || "?" });
               setKill({ label, n: sc, mine });
-              thump(mine);
+              setBiteCue({ id: sc, mine });
+              crunch(mine);
+              window.setTimeout(() => setBiteCue(null), mine ? 1750 : 1300);
               setEvents((ev) =>
                 [
                   t("bite #{n} · {who}", { n: sc, who: mine ? t("you") : victimName || "?" }),
@@ -577,7 +583,25 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       return sig;
     });
 
-  const trade = (kind: "open" | "close") =>
+  const trade = (kind: "open" | "close") => {
+    // Fever eats the first click: the button is not where your hand thinks it is.
+    // Close is never blocked — being unable to cut a loss would be a punishment,
+    // not a joke.
+    if (kind === "open" && iAmMad) {
+      const until = Number((mySeat as any)?.madUntil ?? 0);
+      if (feverSnagRef.current !== until) {
+        feverSnagRef.current = until;
+        const taunts = [
+          "your hand didn't obey · try again",
+          "the button moved · it does that now",
+          "not yet · the pit is still chewing",
+          "you aimed for one side and hit the other",
+        ];
+        setFeverTaunt(t(taunts[Math.abs(Math.floor(until / 20)) % taunts.length]));
+        window.setTimeout(() => setFeverTaunt(null), 2800);
+        return;
+      }
+    }
     run(kind === "open" ? "open" : "close", async () => {
       const er = erConn();
       const program = programAt(er, wallet.publicKey);
@@ -592,6 +616,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
       const tx = await builder.transaction();
       return sendTx(er, tx, wallet, { skipPreflight: true });
     });
+  };
 
   const endRound = () =>
     run("end_round", async () => {
@@ -1085,6 +1110,9 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
         </div>
       )}
 
+      <BiteFX cue={biteCue} />
+      <FeverFX active={iAmMad} left={madLeft} lang={lang} />
+
       {error && <div className="err">{error}</div>}
       {notice && <div className="ok">{notice}</div>}
 
@@ -1238,17 +1266,20 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
                       : t("Close {side}", { side: mySeat.side > 0 ? "LONG" : "SHORT" })}
                   </button>
                 ) : (
-                  <button
-                    className={`btn ${side === 1 ? "long" : "short"}`}
-                    disabled={busy !== null || myIndex < 0}
-                    onClick={() => trade("open")}
-                  >
-                    {myIndex < 0
-                      ? t("not seated")
-                      : busy === "open"
-                        ? t("sending…")
-                        : t("Open {side}", { side: side === 1 ? "LONG" : "SHORT" })}
-                  </button>
+                  <>
+                    {feverTaunt && <p className="fever-taunt">{feverTaunt}</p>}
+                    <button
+                      className={`btn ${side === 1 ? "long" : "short"}`}
+                      disabled={busy !== null || myIndex < 0}
+                      onClick={() => trade("open")}
+                    >
+                      {myIndex < 0
+                        ? t("not seated")
+                        : busy === "open"
+                          ? t("sending…")
+                          : t("Open {side}", { side: side === 1 ? "LONG" : "SHORT" })}
+                    </button>
+                  </>
                 )}
                 <p className="hint">
                   {t("Position size {lev}× your equity. Profit and loss follow the live price and settle on Solana when the round ends.", { lev: leverage })}

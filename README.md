@@ -90,6 +90,9 @@ La mordida elige **al azar** a un asiento que tenga posición abierta y lo cierr
 mercado. Si estás plano, no te toca. Por eso aguantar con posición es una decisión, no
 un reflejo.
 
+Y se siente: dos hileras de dientes cierran sobre **toda la pantalla**, el fondo se va a
+negro y el crujido se sintetiza en el navegador. Si te toca a ti, la dentellada dura más.
+
 ### 5. El campanazo
 
 Cuando se acaba el tiempo, la ronda se cierra, las posiciones se destapan y se calcula
@@ -102,6 +105,10 @@ Antes del reparto hay dos cosas que pueden mover el pozo:
   asiento se lleva el **10 %** del pozo antes del podio.
 - **Fiebre**: si tu presión llega a 100, tus órdenes salen invertidas durante 20 segundos.
   Pides long y se ejecuta short. No pierdes el juicio, pierdes el mando.
+
+La fiebre no se queda en la mecánica: la pantalla se oscurece, empiezan a aparecer frases
+sueltas por todas partes y el primer click en abrir posición se lo come el pozo. Cerrar
+nunca se bloquea: cortar una pérdida no es un chiste.
 
 ### 6. El podio y la serie
 
