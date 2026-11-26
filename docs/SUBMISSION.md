@@ -37,7 +37,10 @@ the market: one seat, the same entry, and a house account that pays up to 3× th
 run beats 1,000 credits. The app also creates a disposable trading account in the browser,
 funded by a devnet faucet, so the main wallet signs once and orders never open a popup again.
 A full-width price chart runs on the round clock and pins every entry at its exact price.
-Everything is permissionless and verifiable: the frontend is just a client.
+Every wallet has a profile assembled from its own accounts — a generated avatar and handle,
+points with the change since the last visit, PnL (paid minus entry), rounds won and lost,
+bites taken, its round history and its place on the leaderboard — with nothing stored
+off-chain. Everything is permissionless and verifiable: the frontend is just a client.
 
 ## Categoría
 
@@ -112,6 +115,7 @@ sirven para jugar. Sin ER no hay juego, y sin TEE el libro sería público.
 - [x] Trading account con fondeo de la app y retiro a la wallet principal
 - [x] Modo solo visible desde el lobby y la landing (`/play?mode=solo`)
 - [x] Gráfica del precio en grande con el punto de entrada de cada posición
+- [x] Perfil del jugador y tabla de líderes derivados de las cuentas on-chain
 
 ## Equipo
 
