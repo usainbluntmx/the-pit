@@ -3124,4 +3124,5 @@ a.pf-tr:hover {
 
 .topbar .pill {
   white-space: nowrap;
+  flex: 0 0 auto;
 }
