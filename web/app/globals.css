@@ -3121,3 +3121,7 @@ a.pf-tr:hover {
     display: none;
   }
 }
+
+.topbar .pill {
+  white-space: nowrap;
+}
