@@ -349,7 +349,7 @@ export default function ProfilePage() {
                 <div>
                   <span>{t("worst round")}</span>
                   <b className={profile.worst && profile.worst.net < 0 ? "down" : ""}>
-                    {profile.worst ? `${signed(profile.worst.net)} SOL` : "—"}
+                    {profile.worst && profile.worst.net < 0 ? `${signed(profile.worst.net)} SOL` : "—"}
                   </b>
                 </div>
                 <div>
