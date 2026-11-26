@@ -25,6 +25,7 @@ export default function Landing() {
           <a href="#how">{c.nav.how}</a>
           <a href="#bite">{c.nav.bite}</a>
           <a href="#stack">{c.nav.stack}</a>
+          <Link href="/profile">{c.nav.profile}</Link>
           <LangSwitch />
           <Link className="btn" href="/play">
             {c.nav.play}

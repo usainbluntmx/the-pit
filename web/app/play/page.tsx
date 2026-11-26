@@ -358,6 +358,9 @@ export default function Home() {
         {wallet ? (
           <div className="wallet-box" data-guide="wallet">
             <LangSwitch />
+            <Link className="pill" href="/profile">
+              {c.nav.profile}
+            </Link>
             <button className="help-btn" onClick={() => setGuideOpen(true)} title={c.common.replayTour}>
               {c.common.guide}
             </button>
@@ -385,6 +388,9 @@ export default function Home() {
         ) : (
           <div className="wallet-box" data-guide="wallet">
             <LangSwitch />
+            <Link className="pill" href="/profile">
+              {c.nav.profile}
+            </Link>
             <button className="help-btn" onClick={() => setGuideOpen(true)} title={c.common.startTour}>
               {c.common.guide}
             </button>

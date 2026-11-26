@@ -30,6 +30,7 @@ export const es: Copy = {
     bite: "la mordida",
     stack: "por qué se siente rápido",
     play: "Jugar en devnet",
+    profile: "Tu perfil",
   },
   hero: {
     kicker: "Entertainment finance · juegos de trading",

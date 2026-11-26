@@ -2766,3 +2766,358 @@ a.brand-text {
     animation: none;
   }
 }
+
+/* -------------------------------- profile -------------------------------- */
+
+.up { color: var(--long); }
+.down { color: var(--short); }
+
+.pf-connect {
+  padding: 56px 0 40px;
+  max-width: 720px;
+}
+
+.pf-connect h1 {
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  margin: 0 0 16px;
+}
+
+.pf-wallets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.pf-loading {
+  padding: 46px 0;
+  max-width: 460px;
+}
+
+.pf-hero {
+  margin-top: 24px;
+  padding: 20px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  background:
+    radial-gradient(520px 180px at 0% 0%, rgba(255, 176, 32, 0.09), transparent 70%),
+    var(--panel);
+}
+
+.pf-id {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.pf-avatar {
+  flex: 0 0 auto;
+  filter: drop-shadow(0 6px 22px rgba(0, 0, 0, 0.55));
+}
+
+.pf-handle {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.pf-addr {
+  color: var(--dim);
+  font-size: 11.5px;
+  margin-top: 3px;
+  word-break: break-all;
+}
+
+.pf-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pf-hero-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--dim);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.pf-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pf-card {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.pf-value {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pf-unit {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dim);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pf-delta {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.pf-mini {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  padding: 14px 18px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+.pf-mini div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pf-mini span {
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pf-mini b {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.pf-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pf-rounds .panel-head h2,
+.pf-board .panel-head h2,
+.pf-series .panel-head h2 {
+  margin: 0;
+  font-size: 11.5px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+}
+
+.pf-rounds .panel-head,
+.pf-board .panel-head,
+.pf-series .panel-head {
+  color: var(--muted);
+}
+
+.pf-rounds .hint {
+  padding: 18px;
+}
+
+.pf-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-tr {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1.35fr) 62px 92px 58px;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(30, 35, 43, 0.65);
+  font-size: 12px;
+  transition: background 0.12s ease;
+}
+
+a.pf-tr:hover {
+  background: var(--panel-2);
+}
+
+.pf-tr:last-child {
+  border-bottom: none;
+}
+
+.pf-th {
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding-top: 12px;
+  padding-bottom: 8px;
+}
+
+.pf-tr .live-chip {
+  margin-left: 8px;
+}
+
+.pf-tabs {
+  display: inline-flex;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+  background: var(--bg);
+}
+
+.pf-tabs button {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pf-tabs button.on {
+  background: var(--panel-2);
+  color: var(--amber);
+}
+
+.pf-board-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.pf-board-row {
+  display: grid;
+  grid-template-columns: 22px 26px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(30, 35, 43, 0.5);
+  font-size: 12px;
+}
+
+.pf-board-row:last-child {
+  border-bottom: none;
+}
+
+.pf-board-row.you {
+  background: rgba(255, 176, 32, 0.07);
+  box-shadow: inset 2px 0 0 var(--amber);
+}
+
+.pf-pos {
+  color: var(--dim);
+  font-size: 11px;
+}
+
+.pf-board-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--muted);
+}
+
+.pf-board-row.you .pf-board-name {
+  color: var(--text);
+}
+
+.pf-board-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.pf-you {
+  font-style: normal;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+  border: 1px solid rgba(255, 176, 32, 0.4);
+  border-radius: 5px;
+  padding: 2px 5px;
+}
+
+.pf-board .foot-note {
+  margin: 0;
+  padding: 12px 16px 16px;
+  font-size: 10.5px;
+  line-height: 1.6;
+}
+
+.pf-series {
+  margin-top: 12px;
+}
+
+.pf-series-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(30, 35, 43, 0.6);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.pf-series-row:last-child {
+  border-bottom: none;
+}
+
+@media (max-width: 900px) {
+  .pf-stats,
+  .pf-mini {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pf-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .pf-hero {
+    padding: 16px;
+  }
+  .pf-id {
+    gap: 14px;
+  }
+  .pf-handle {
+    font-size: 17px;
+  }
+  .pf-tr {
+    grid-template-columns: 54px minmax(0, 1.2fr) 74px 50px;
+  }
+  .pf-tr > :nth-child(3) {
+    display: none;
+  }
+  .pf-th > :nth-child(3) {
+    display: none;
+  }
+}

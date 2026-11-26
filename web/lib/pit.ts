@@ -395,28 +395,65 @@ export async function fetchSeries(
 ): Promise<SeriesAccount | null> {
   const info = await connection.getAccountInfo(key);
   if (!info) return null;
-  const coder = new anchor.BorshAccountsCoder(IDL);
-  const raw: any = coder.decode("Series", info.data);
-  // BorshAccountsCoder decodifica con los nombres del IDL, que van en snake_case.
-  const nonceBytes: number[] = Array.from(raw.nonce as number[]).slice(0, Number(raw.nonce_len));
-  return {
-    creator: raw.creator,
-    nonce: Buffer.from(nonceBytes).toString("utf8"),
-    bump: raw.bump,
-    rounds: raw.rounds,
-    maxRounds: raw.max_rounds,
-    entryFee: raw.entry_fee,
-    standings: raw.standings
-      .map((r: any) => ({
-        player: r.player,
-        points: Number(r.points),
-        rounds: Number(r.rounds),
-        podiums: Number(r.podiums),
-        bites: Number(r.bites),
-        survived: Number(r.survived),
-      }))
-      .filter((r: Standing) => !r.player.equals(PublicKey.default)),
-  };
+  return decodeSeries(info.data);
+}
+
+export type SeriesWithKey = { publicKey: PublicKey; series: SeriesAccount };
+
+function decodeSeries(data: Buffer): SeriesAccount | null {
+  try {
+    const coder = new anchor.BorshAccountsCoder(IDL);
+    const raw: any = coder.decode("Series", data);
+    // BorshAccountsCoder decodifica con los nombres del IDL, que van en snake_case.
+    const nonceBytes: number[] = Array.from(raw.nonce as number[]).slice(0, Number(raw.nonce_len));
+    return {
+      creator: raw.creator,
+      nonce: Buffer.from(nonceBytes).toString("utf8"),
+      bump: raw.bump,
+      rounds: raw.rounds,
+      maxRounds: raw.max_rounds,
+      entryFee: raw.entry_fee,
+      standings: raw.standings
+        .map((r: any) => ({
+          player: r.player,
+          points: Number(r.points),
+          rounds: Number(r.rounds),
+          podiums: Number(r.podiums),
+          bites: Number(r.bites),
+          survived: Number(r.survived),
+        }))
+        .filter((r: Standing) => !r.player.equals(PublicKey.default)),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Every series that exists, base layer plus the rollups. Series are created and scored on
+ * the base layer, but the scan mirrors `listArenas` so a series bound to a delegated arena is
+ * still found if a rollup ever answers for it.
+ */
+export async function listSeries(connection: Connection): Promise<SeriesWithKey[]> {
+  const sources = [connection, ...ER_SCAN.map((url) => new Connection(url, { commitment: "confirmed" }))];
+  const scans = await Promise.allSettled(
+    sources.map((c) =>
+      withTimeout(
+        c.getProgramAccounts(PROGRAM_ID, { filters: [{ dataSize: SERIES_ACCOUNT_SIZE }] }),
+        8_000,
+      ),
+    ),
+  );
+
+  const byKey = new Map<string, SeriesWithKey>();
+  for (const scan of scans) {
+    if (scan.status !== "fulfilled") continue;
+    for (const { pubkey, account } of scan.value) {
+      const series = decodeSeries(account.data);
+      if (series) byKey.set(pubkey.toBase58(), { publicKey: pubkey, series });
+    }
+  }
+  return [...byKey.values()];
 }
 
 export function rememberSeries(key: string) {

@@ -27,6 +27,7 @@ export const en = {
     bite: "the bite",
     stack: "why it feels fast",
     play: "Play on devnet",
+    profile: "Your profile",
   },
   hero: {
     kicker: "Entertainment finance · trading games",
