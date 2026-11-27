@@ -546,12 +546,13 @@ export default function Home() {
             {c.play.emptyBoard}
           </div>
         )}
-        {arenas.map((a) => {
+        {arenas.map((a, i) => {
           const st = statusOf(a);
           return (
             <div
               className="card"
               key={a.publicKey.toBase58()}
+              style={{ "--i": i } as React.CSSProperties}
               data-guide="arena-card"
               onClick={() => openArena(a.publicKey)}
             >

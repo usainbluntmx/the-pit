@@ -448,8 +448,13 @@ export default function ProfilePage() {
                         <span>{t("result")}</span>
                         <span>{t("place")}</span>
                       </div>
-                      {profile.recent.map((r) => (
-                        <Link className="pf-tr" key={r.key} href={`/play?arena=${r.key}`}>
+                      {profile.recent.map((r, i) => (
+                        <Link
+                          className="pf-tr"
+                          key={r.key}
+                          style={{ "--i": i } as React.CSSProperties}
+                          href={`/play?arena=${r.key}`}
+                        >
                           <span className="mono">{day(r.endAt || r.startAt)}</span>
                           <span className="mono">
                             {r.solo ? t("solo") : `${r.players} ${t("seats")}`}

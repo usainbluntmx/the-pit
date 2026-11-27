@@ -3540,3 +3540,209 @@ a.lb-row:hover {
     padding: 0 14px;
   }
 }
+
+/* ------------------------------ motion pass ------------------------------ */
+/*
+ * Movimiento con propósito: navegación (evitar el salto), feedback de press y
+ * hover, y cambio de estado (precio, puntos). Nada de fades por scroll ni
+ * partículas. Todo transform/opacity, todo por CSS, y con reduced-motion.
+ */
+
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --dur-press: 110ms;
+  --dur-ui: 170ms;
+  --dur-enter: 240ms;
+}
+
+.page-enter {
+  animation: page-in var(--dur-enter) var(--ease-out);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* press feedback inmediato en todo lo accionable */
+.btn,
+.side-btn,
+.mode-card,
+.copy,
+.help-btn,
+.pf-tabs button,
+.backlink {
+  transition:
+    transform var(--dur-press) var(--ease-out),
+    background-color var(--dur-ui) ease,
+    border-color var(--dur-ui) ease,
+    color var(--dur-ui) ease,
+    box-shadow var(--dur-ui) ease;
+}
+
+.btn:active,
+.side-btn:active,
+.mode-card:active,
+.copy:active,
+.help-btn:active,
+.backlink:active {
+  transform: scale(0.985);
+}
+
+/* hover solo donde hay puntero fino */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .land-nav-links > a {
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0 1px;
+    transition: background-size var(--dur-ui) var(--ease-out), color var(--dur-ui) ease;
+  }
+
+  .land-nav-links > a:hover {
+    background-size: 100% 1px;
+  }
+
+  .pf-rounds a.pf-tr:hover .pf-board-name,
+  .pf-rounds a.pf-tr:hover {
+    color: var(--text);
+  }
+}
+
+/* entrada escalonada de las tarjetas del lobby (una sola vez, 35 ms) */
+.grid .card {
+  animation: rise var(--dur-enter) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 35ms);
+}
+
+/* tablero en vivo: esqueleto, entrada de filas y tick del precio */
+.lb-skel {
+  height: 11px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #141922 25%, #1e2630 37%, #141922 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+.lb-row.enter {
+  animation: row-in var(--dur-enter) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+.lb-price b.tick-up {
+  animation: tick-up 720ms var(--ease-out);
+}
+
+.lb-price b.tick-down {
+  animation: tick-down 720ms var(--ease-out);
+}
+
+@keyframes tick-up {
+  0% {
+    color: var(--long);
+    transform: translateY(-2px);
+  }
+  100% {
+    color: inherit;
+    transform: none;
+  }
+}
+
+@keyframes tick-down {
+  0% {
+    color: var(--short);
+    transform: translateY(2px);
+  }
+  100% {
+    color: inherit;
+    transform: none;
+  }
+}
+
+/* perfil: el delta de puntos respira una vez al entrar */
+.pf-delta {
+  animation: delta-pop 520ms var(--ease-out) 180ms backwards;
+}
+
+@keyframes delta-pop {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* la lista de rondas entra en cascada corta */
+.pf-table a.pf-tr {
+  animation: row-in var(--dur-enter) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-enter,
+  .grid .card,
+  .lb-row.enter,
+  .pf-table a.pf-tr,
+  .pf-delta {
+    animation: none;
+  }
+
+  .lb-price b.tick-up,
+  .lb-price b.tick-down {
+    animation: none;
+  }
+
+  .btn:hover,
+  .card:hover {
+    transform: none;
+  }
+
+  .lb-skel {
+    animation-duration: 3s;
+  }
+}
+
+/* solo una mesa en vivo late: el estado real, no decoración */
+.card .tag.live::before {
+  animation: blink 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card .tag.live::before {
+    animation: none;
+  }
+}

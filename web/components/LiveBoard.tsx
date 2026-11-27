@@ -9,7 +9,7 @@
  */
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Arena } from "@/lib/pit";
 import { useT } from "@/lib/i18n";
 
@@ -20,6 +20,8 @@ export function LiveBoard() {
   const t = useT();
   const [arenas, setArenas] = useState<Arena[] | null>(null);
   const [price, setPrice] = useState<number | null>(null);
+  const [tick, setTick] = useState<"up" | "down" | null>(null);
+  const lastPrice = useRef<number | null>(null);
 
   const [lib, setLib] = useState<typeof import("@/lib/pit") | null>(null);
 
@@ -41,12 +43,27 @@ export function LiveBoard() {
       .listArenas(base)
       .then((list) => alive && setArenas(list))
       .catch(() => alive && setArenas([]));
-    lib
-      .readPriceLive()
-      .then((p) => alive && setPrice(p))
-      .catch(() => undefined);
+    const pull = () =>
+      lib
+        .readPriceLive()
+        .then((p) => {
+          if (!alive || p === null) return;
+          const prev = lastPrice.current;
+          lastPrice.current = p;
+          setPrice(p);
+          if (prev !== null && Math.round(p * 100) !== Math.round(prev * 100)) {
+            setTick(p > prev ? "up" : "down");
+            window.setTimeout(() => alive && setTick(null), 760);
+          }
+        })
+        .catch(() => undefined);
+
+    pull();
+    // Un cambio de precio es un cambio de estado: se marca, no se anima porque sí.
+    const id = window.setInterval(pull, 15_000);
     return () => {
       alive = false;
+      window.clearInterval(id);
     };
   }, [lib]);
 
@@ -72,7 +89,9 @@ export function LiveBoard() {
 
       <div className="lb-price">
         <span className="lb-market">{t("SOL / USD")}</span>
-        <b className="mono">{price === null ? "—" : `$${price.toFixed(2)}`}</b>
+        <b key={price ?? "none"} className={`mono ${tick ? `tick-${tick}` : ""}`}>
+          {price === null ? "—" : `$${price.toFixed(2)}`}
+        </b>
         <span className="lb-feed">Pyth Lazer · {t("in the rollup")}</span>
       </div>
 
@@ -82,12 +101,24 @@ export function LiveBoard() {
           <span>{t("seats")}</span>
           <span>{t("pot")}</span>
         </div>
-        {arenas === null && <div className="lb-empty">{t("reading the board…")}</div>}
+        {arenas === null &&
+          [0, 1, 2].map((i) => (
+            <div className="lb-row" key={`skel-${i}`} aria-hidden="true">
+              <span className="lb-skel" style={{ width: `${58 - i * 8}%` }} />
+              <span className="lb-skel" style={{ width: 26 }} />
+              <span className="lb-skel" style={{ width: 38 }} />
+            </div>
+          ))}
         {arenas !== null && rows.length === 0 && <div className="lb-empty">{t("no tables right now")}</div>}
-        {rows.map((arena) => {
+        {rows.map((arena, i) => {
           const status = lib ? lib.statusOf(arena) : "open";
           return (
-            <Link className="lb-row" key={arena.publicKey.toBase58()} href={`/play?arena=${arena.publicKey.toBase58()}`}>
+            <Link
+              className="lb-row enter"
+              key={arena.publicKey.toBase58()}
+              style={{ "--i": i } as React.CSSProperties}
+              href={`/play?arena=${arena.publicKey.toBase58()}`}
+            >
               <span className="lb-name">
                 {lib ? lib.feedNameOf(arena.feed) : "—"}
                 <i className={`lb-status ${status}`}>{t(status === "live" ? "live" : status === "open" ? "open" : "done")}</i>
