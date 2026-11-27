@@ -498,7 +498,11 @@ export default function ProfilePage() {
                           <span className="pf-pos mono">{i + 1}</span>
                           <span className="pf-board-name mono">{handleOf(row.address)}</span>
                           <span className="pf-board-value mono">
-                            {tab === "points" ? row.points : `${signed(row.net, 3)}`}
+                            {tab === "points"
+                              ? row.points
+                              : row.rounds === 0
+                                ? "—"
+                                : `${signed(row.net, 3)}`}
                             {you && <i className="pf-you">{t("you")}</i>}
                           </span>
                         </div>

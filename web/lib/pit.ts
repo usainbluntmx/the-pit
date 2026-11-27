@@ -175,11 +175,17 @@ const DUMMY = Keypair.generate().publicKey;
 
 /* --------------------------------- reads -------------------------------- */
 
-/** Rollups we scan for arenas that are currently delegated (they leave the base account map). */
+/**
+ * Rollups we scan for arenas that are currently delegated (they leave the base account map).
+ * The TEE validator is included: a table sealed inside the enclave is invisible to the three
+ * public rollups, and leaving it out made players with only those rounds look like they had
+ * never played (zero rounds, zero PnL) while their series points were right there.
+ */
 const ER_SCAN = [
   "https://devnet-as.magicblock.app",
   "https://devnet-eu.magicblock.app",
   "https://devnet-us.magicblock.app",
+  "https://devnet-tee.magicblock.app",
 ];
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {

@@ -206,6 +206,9 @@ export function rankTable(table: LeaderRow[], metric: "points" | "net"): LeaderR
       if (b.points !== a.points) return b.points - a.points;
       if (b.net !== a.net) return b.net - a.net;
     } else {
+      // A player whose rounds are not visible yet has no PnL to compare: keep them out of
+      // the money ranking instead of pretending they are flat at zero.
+      if ((a.rounds === 0) !== (b.rounds === 0)) return a.rounds === 0 ? 1 : -1;
       if (b.net !== a.net) return b.net - a.net;
       if (b.points !== a.points) return b.points - a.points;
     }

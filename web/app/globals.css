@@ -3769,3 +3769,16 @@ a.lb-row:hover {
     animation: none;
   }
 }
+
+
+/* la tabla de líderes reanima al cambiar de métrica */
+.pf-board-row.enter {
+  animation: row-in var(--dur-enter) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pf-board-row.enter {
+    animation: none;
+  }
+}
