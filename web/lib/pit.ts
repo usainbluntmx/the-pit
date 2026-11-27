@@ -287,6 +287,19 @@ export async function erConnection(
 const PRICE_OFFSET = 73;
 const EXPONENT_OFFSET = 89;
 
+/** Newest price across the devnet rollups, falling back to the base layer. */
+export async function readPriceLive(feed: PublicKey = FEEDS.SOL.address): Promise<number | null> {
+  for (const url of ER_SCAN) {
+    try {
+      const price = await readPrice(new Connection(url, { commitment: "confirmed" }), feed);
+      if (price && price > 0) return price;
+    } catch {
+      /* try the next rollup */
+    }
+  }
+  return readPrice(baseConnection(), feed);
+}
+
 export async function readPrice(
   connection: Connection,
   feed: PublicKey,

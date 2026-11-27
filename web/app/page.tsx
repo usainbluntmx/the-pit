@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { LangSwitch } from "@/components/LangSwitch";
+import { LiveBoard } from "@/components/LiveBoard";
 import { Rich, useI18n } from "@/lib/i18n";
 
 const PROGRAM = "4iVtfWTrVo4iUAeTBVhhjkDr9kGK4dTD95vKM8c6dbar";
@@ -34,24 +35,28 @@ export default function Landing() {
       </header>
 
       <section className="land-hero">
-        <div className="kicker">{c.hero.kicker}</div>
-        <h1>
-          {c.hero.titleA}
-          <br />
-          <em>{c.hero.titleEm}</em>
-        </h1>
-        <p className="lede">{c.hero.lede}</p>
-        <div className="land-cta">
-          <Link className="btn" href="/play">
-            {c.hero.ctaPrimary}
-          </Link>
-          <Link className="btn ghost" href="/play?mode=solo">
-            {c.hero.ctaSolo}
-          </Link>
-          <a className="btn ghost" href="#how">
-            {c.hero.ctaGhost}
-          </a>
+        <div className="land-hero-copy">
+          <div className="kicker">{c.hero.kicker}</div>
+          <h1>
+            {c.hero.titleA}
+            <br />
+            <em>{c.hero.titleEm}</em>
+          </h1>
+          <p className="lede">{c.hero.lede}</p>
+          <div className="land-cta">
+            <Link className="btn" href="/play">
+              {c.hero.ctaPrimary}
+            </Link>
+            <Link className="btn ghost" href="/play?mode=solo">
+              {c.hero.ctaSolo}
+            </Link>
+            <a className="btn ghost" href="#how">
+              {c.hero.ctaGhost}
+            </a>
+          </div>
         </div>
+
+        <LiveBoard />
 
         <div className="hero-stats">
           {c.hero.stats.map((s) => (

@@ -970,7 +970,7 @@ export default function ArenaView({ arenaPubkey, wallet, onBack }: Props) {
               </button>
             )}
             <button className="btn ghost" onClick={copyInvite} style={{ display: isSolo ? "none" : undefined }}>
-              {copiedLink ? t("link copied ✓") : t("Copy invite link")}
+              {copiedLink ? t("link copied") : t("Copy invite link")}
             </button>
           </div>
           <p className="nextstep-note" style={{ display: isSolo ? "none" : undefined }}>

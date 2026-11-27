@@ -557,15 +557,11 @@ export default function Home() {
             >
               <div className="card-top">
                 <span className={`tag ${st}`}>{c.status[st]}</span>
-                <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  {a.maxPlayers === 1 && <span className="pill">{c.play.soloBadge}</span>}
-                  <span className="mono" style={{ fontSize: 11, color: "var(--dim)" }}>
-                    {shortKey(a.publicKey)}
-                  </span>
-                </span>
+                <span className="mono card-key">{shortKey(a.publicKey)}</span>
               </div>
               <div className="card-pot">{fmtSol(sol(a.pot))} SOL</div>
               <div className="card-meta">
+                {a.maxPlayers === 1 && <span>{c.play.soloBadge}</span>}
                 <span>{c.play.players(a.playerCount, a.maxPlayers)}</span>
                 <span>{a.duration.toString()}s</span>
                 <span>{feedNameOf(a.feed)}</span>

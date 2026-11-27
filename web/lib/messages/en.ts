@@ -23,9 +23,9 @@ export const en = {
     airdropFailed: (message: string) => `${message} — you can also use https://faucet.solana.com`,
   },
   nav: {
-    how: "how it plays",
-    bite: "the bite",
-    stack: "why it feels fast",
+    how: "How it plays",
+    bite: "The bite",
+    stack: "Why it feels fast",
     play: "Play on devnet",
     profile: "Your profile",
   },

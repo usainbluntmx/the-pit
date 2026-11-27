@@ -224,6 +224,7 @@ export default function ProfilePage() {
 
       {!wallet && (
         <section className="pf-connect">
+          <div className="pf-connect-copy">
           <div className="kicker">{t("your record")}</div>
           <h1>{t("Your runs, on the record.")}</h1>
           <p className="lede">
@@ -252,6 +253,26 @@ export default function ProfilePage() {
             ))}
           </div>
           {error && <div className="err">{error}</div>}
+          </div>
+
+          <aside className="pf-teaser panel">
+            <div className="panel-head">
+              <h2>{t("top of the board")}</h2>
+              <span className="mono">{t("{n} players", { n: table.length })}</span>
+            </div>
+            {rankTable(table, "points")
+              .slice(0, 5)
+              .map((row, i) => (
+                <div className="pf-board-row" key={row.address}>
+                  <span className="pf-pos mono">{i + 1}</span>
+                  <span className="pf-board-name mono">{handleOf(row.address)}</span>
+                  <span className="pf-board-value mono">{row.points}</span>
+                </div>
+              ))}
+            <p className="foot-note">
+              {t("Connect the wallet you play with to see your own row here.")}
+            </p>
+          </aside>
         </section>
       )}
 
@@ -440,10 +461,7 @@ export default function ProfilePage() {
                           <span className={`mono ${r.net > 0 ? "up" : r.net < 0 ? "down" : ""}`}>
                             {r.outcome === "live" || r.outcome === "pending" ? "—" : `${signed(r.net)} SOL`}
                           </span>
-                          <span className="mono">
-                            {r.place && !r.solo ? `${r.place}º` : "—"}
-                            {r.outcome === "lost" && r.bites > 0 ? ` · ${r.bites}🦷` : ""}
-                          </span>
+                          <span className="mono">{r.place && !r.solo ? `${r.place}º` : "—"}</span>
                         </Link>
                       ))}
                     </div>
@@ -469,7 +487,6 @@ export default function ProfilePage() {
                       return (
                         <div className={`pf-board-row ${you ? "you" : ""}`} key={row.address}>
                           <span className="pf-pos mono">{i + 1}</span>
-                          <PitAvatar seed={row.address} size={26} muted={!you && i > 2} />
                           <span className="pf-board-name mono">{handleOf(row.address)}</span>
                           <span className="pf-board-value mono">
                             {tab === "points" ? row.points : `${signed(row.net, 3)}`}
