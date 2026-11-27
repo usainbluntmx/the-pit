@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="THE PIT">
+  <rect width="64" height="64" rx="14" fill="#0b0d11"/>
+  <g fill="#ffb020" opacity="0.92"><polygon points="23.56,4.26 40.44,4.26 32.00,13.00"/><polygon points="41.48,4.59 55.14,14.52 43.17,16.63"/><polygon points="55.78,15.40 60.99,31.45 50.07,26.13"/><polygon points="60.99,32.55 55.78,48.60 50.07,37.87"/><polygon points="55.14,49.48 41.48,59.41 43.17,47.37"/><polygon points="40.44,59.74 23.56,59.74 32.00,51.00"/><polygon points="22.52,59.41 8.86,49.48 20.83,47.37"/><polygon points="8.22,48.60 3.01,32.55 13.93,37.87"/><polygon points="3.01,31.45 8.22,15.40 13.93,26.13"/><polygon points="8.86,14.52 22.52,4.59 20.83,16.63"/></g>
+  <circle cx="32" cy="32" r="18.43" fill="#07080a"/>
+  <polygon points="23.259999999999998,29.34 30.1,31.05 23.259999999999998,32.95" fill="#ffb020"/>
+      <polygon points="40.74,29.34 33.9,31.05 40.74,32.95" fill="#ffb020"/><path d="M25.54 36.94 L38.46 36.94" stroke="#ffb020" stroke-width="1.33" stroke-linecap="round"/>
+      <polygon points="27.44,36.94 29.15,40.36 30.86,36.94" fill="#ffb020"/>
+      <polygon points="33.14,36.94 34.85,40.36 36.56,36.94" fill="#ffb020"/>
+</svg>
