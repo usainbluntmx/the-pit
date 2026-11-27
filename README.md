@@ -691,7 +691,7 @@ Publicación:
 - [x] Deploy público del web — https://the-pit.zerotwolabs.xyz/ (Dokploy, auto-deploy en cada push a `main`)
 - [x] Video demo corto y proof of work listos para compartir
 - [x] Perfil del jugador en `/profile`: avatar y handle derivados de la wallet, puntos con
-  cambio desde la última visita, PnL (invertido/cobrado), récord de rondas, mordidas,
+  cambio desde la última foto del día anterior, PnL (invertido/cobrado), récord de rondas, mordidas,
   historial y tabla de mejores jugadores por puntos o por PnL — todo agregado en el cliente
   desde las cuentas del programa, sin backend
 

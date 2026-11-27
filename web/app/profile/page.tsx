@@ -25,25 +25,60 @@ import {
   reconnectWallet,
 } from "@/lib/wallet";
 
-type Snapshot = { points: number; net: number; rounds: number; ts: number };
+/**
+ * One photo per day, per wallet, in this browser.
+ *
+ * Points live on-chain, but "did they go up?" needs a baseline. Keeping the last photo of
+ * every day turns the badge into "since yesterday" instead of "since the page was last
+ * opened", which changed every reload and made the number meaningless. Only the baseline is
+ * local: every stat is still recomputed from the accounts above it.
+ */
+type Snapshot = { day: string; points: number; net: number; rounds: number; ts: number };
+
+const DAY_MS = 86_400_000;
+const MAX_DAYS = 30;
 
 const snapshotKey = (address: string) => `pit:profile:${address}`;
 
-function readSnapshot(address: string): Snapshot | null {
+/** Local calendar day, not UTC: the player thinks in the day their clock shows. */
+function dayOf(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function readSnapshots(address: string): Snapshot[] {
   try {
     const raw = window.localStorage.getItem(snapshotKey(address));
-    return raw ? (JSON.parse(raw) as Snapshot) : null;
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((e): e is Snapshot => !!e && typeof e.points === "number" && typeof e.day === "string");
+    }
+    // Shape from the first version of the page: a single snapshot without a day.
+    const old = parsed as Partial<Snapshot>;
+    if (typeof old?.points !== "number") return [];
+    const ts = typeof old.ts === "number" ? old.ts : Date.now();
+    return [{ day: dayOf(ts), points: old.points, net: old.net ?? 0, rounds: old.rounds ?? 0, ts }];
   } catch {
-    return null;
+    return [];
   }
 }
 
-function writeSnapshot(address: string, snap: Snapshot) {
+/** Overwrite today's photo and keep the last `MAX_DAYS` days, newest first. */
+function writeToday(address: string, snap: Snapshot, history: Snapshot[]) {
   try {
-    window.localStorage.setItem(snapshotKey(address), JSON.stringify(snap));
+    const next = [snap, ...history.filter((e) => e.day !== snap.day)]
+      .sort((a, b) => b.day.localeCompare(a.day))
+      .slice(0, MAX_DAYS);
+    window.localStorage.setItem(snapshotKey(address), JSON.stringify(next));
   } catch {
     /* private mode */
   }
+}
+
+/** The newest photo from an earlier day: the baseline for the ▲/▼. */
+function previousSnapshot(history: Snapshot[], today: string): Snapshot | null {
+  return history.find((e) => e.day < today) ?? null;
 }
 
 const signed = (n: number, digits = 4) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${fmtSol(Math.abs(n), digits)}`;
@@ -62,7 +97,7 @@ export default function ProfilePage() {
   const [arenas, setArenas] = useState<Arena[] | null>(null);
   const [series, setSeries] = useState<SeriesWithKey[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [snap, setSnap] = useState<Snapshot | null>(null);
+  const [since, setSince] = useState<Snapshot | null>(null);
   const [tab, setTab] = useState<"points" | "net">("points");
   const [copied, setCopied] = useState(false);
 
@@ -96,19 +131,20 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!arenas || !wallet) {
       setProfile(null);
-      setSnap(null);
+      setSince(null);
       return;
     }
     const address = wallet.publicKey.toBase58();
     const next = profileOf(address, arenas, series);
+    const history = readSnapshots(address);
+    const today = dayOf(Date.now());
     setProfile(next);
-    setSnap(readSnapshot(address));
-    writeSnapshot(address, {
-      points: next.row.points,
-      net: next.row.net,
-      rounds: next.row.rounds,
-      ts: Date.now(),
-    });
+    setSince(previousSnapshot(history, today));
+    writeToday(
+      address,
+      { day: today, points: next.row.points, net: next.row.net, rounds: next.row.rounds, ts: Date.now() },
+      history,
+    );
   }, [arenas, series, wallet]);
 
   const connect = async (id: string) => {
@@ -138,7 +174,12 @@ export default function ProfilePage() {
   };
 
   const board = useMemo(() => rankTable(table, tab).slice(0, 10), [table, tab]);
-  const delta = profile && snap ? profile.row.points - snap.points : null;
+  const delta = profile && since ? profile.row.points - since.points : null;
+  const deltaWhen = since
+    ? since.day === dayOf(Date.now() - DAY_MS)
+      ? t("yesterday")
+      : new Date(since.ts).toLocaleDateString(undefined, { day: "2-digit", month: "short" })
+    : "";
   const loading = !arenas;
 
   return (
@@ -276,12 +317,12 @@ export default function ProfilePage() {
                   </div>
                   <div className="stat-sub">
                     {delta === null
-                      ? t("first visit — the next one shows the change")
+                      ? t("first visit — come back tomorrow to see the change")
                       : delta === 0
-                        ? t("no change since your last visit")
+                        ? t("no change since {when}", { when: deltaWhen })
                         : delta > 0
-                          ? t("up since your last visit")
-                          : t("down since your last visit")}
+                          ? t("up since {when}", { when: deltaWhen })
+                          : t("down since {when}", { when: deltaWhen })}
                   </div>
                 </article>
 

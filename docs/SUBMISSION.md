@@ -38,7 +38,7 @@ run beats 1,000 credits. The app also creates a disposable trading account in th
 funded by a devnet faucet, so the main wallet signs once and orders never open a popup again.
 A full-width price chart runs on the round clock and pins every entry at its exact price.
 Every wallet has a profile assembled from its own accounts — a generated avatar and handle,
-points with the change since the last visit, PnL (paid minus entry), rounds won and lost,
+points with the change since yesterday, PnL (paid minus entry), rounds won and lost,
 bites taken, its round history and its place on the leaderboard — with nothing stored
 off-chain. Everything is permissionless and verifiable: the frontend is just a client.
 
