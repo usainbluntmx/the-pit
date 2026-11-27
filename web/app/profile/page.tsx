@@ -485,12 +485,16 @@ export default function ProfilePage() {
                       </button>
                     </div>
                   </div>
-                  <div className="pf-board-list">
+                  <div className="pf-board-list" key={tab}>
                     {board.length === 0 && <p className="hint">{t("no players yet")}</p>}
                     {board.map((row, i) => {
                       const you = row.address === profile.address;
                       return (
-                        <div className={`pf-board-row ${you ? "you" : ""}`} key={row.address}>
+                        <div
+                          className={`pf-board-row enter ${you ? "you" : ""}`}
+                          key={row.address}
+                          style={{ "--i": i } as React.CSSProperties}
+                        >
                           <span className="pf-pos mono">{i + 1}</span>
                           <span className="pf-board-name mono">{handleOf(row.address)}</span>
                           <span className="pf-board-value mono">
