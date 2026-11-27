@@ -141,13 +141,15 @@ export default function Guide({
           </button>
         </div>
 
-        <div className="guide-title">{step.title}</div>
-        <p className="guide-body">{step.body}</p>
-        {step.why && (
-          <p className="guide-why">
-            <b>{c.guideUi.why}</b> {step.why}
-          </p>
-        )}
+        <div className="guide-text" key={idx}>
+          <div className="guide-title">{step.title}</div>
+          <p className="guide-body">{step.body}</p>
+          {step.why && (
+            <p className="guide-why">
+              <b>{c.guideUi.why}</b> {step.why}
+            </p>
+          )}
+        </div>
 
         <div className="guide-actions">
           <button className="guide-back" disabled={idx === 0} onClick={() => setIdx((v) => Math.max(0, v - 1))}>
